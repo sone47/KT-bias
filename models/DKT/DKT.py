@@ -53,13 +53,12 @@ class DKT:
                 loss = torch.Tensor([0.0])
                 for student in range(batch_size):
                     pred, truth = process_raw_pred(batch[student], integrated_pred[student], self.num_questions)
-                    loss += loss_function(pred[pred > 0], truth[pred > 0])
-
+                    if len(pred[pred > 0]) > 0:
+                        loss += loss_function(pred[pred > 0], truth[pred > 0])
                 # back propagation
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-
                 losses.append(loss.mean().item())
             print("[Epoch %d] LogisticLoss: %.6f" % (e, float(np.mean(losses))))
 
