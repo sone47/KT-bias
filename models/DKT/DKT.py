@@ -16,11 +16,14 @@ class Net(nn.Module):
         super(Net, self).__init__()
         self.hidden_dim = hidden_size
         self.layer_dim = num_layers
-        self.rnn = nn.RNN(num_questions * 2, hidden_size, num_layers, batch_first=True)
+        self.rnn = nn.LSTM(num_questions * 2, hidden_size, num_layers, batch_first=True)
         self.fc = nn.Linear(self.hidden_dim, num_questions)
 
     def forward(self, x):
-        h0 = Variable(torch.zeros(self.layer_dim, x.size(0), self.hidden_dim))
+        h0 = (
+            torch.zeros(self.layer_dim, x.size(0), self.hidden_dim),
+            torch.zeros(self.layer_dim, x.size(0), self.hidden_dim)
+        )
         out, _ = self.rnn(x, h0)
         res = torch.sigmoid(self.fc(out))
         return res
@@ -59,6 +62,7 @@ class DKT:
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+
                 losses.append(loss.mean().item())
             print("[Epoch %d] LogisticLoss: %.6f" % (e, float(np.mean(losses))))
 

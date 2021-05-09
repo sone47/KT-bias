@@ -2,6 +2,7 @@
 # 2021/5/9 @ sone
 
 import itertools
+import math
 
 import numpy as np
 import torch
@@ -20,7 +21,7 @@ class DataReader:
         answer_sequences = np.array([])
         num_file_line = sum([1 for i in open(self.data_path, 'r')])
         with open(self.data_path, 'r') as d:
-            for length, ques, ans in tqdm.tqdm(itertools.zip_longest(*[d] * 3), desc='loading data', total=num_file_line // 3):
+            for length, ques, ans in tqdm.tqdm(itertools.zip_longest(*[d] * 3), desc='loading data', total=math.ceil(num_file_line / 3)):
                 length = int(length)
                 ques = np.array(ques.strip().split(',')).astype(np.int)
                 ans = np.array(ans.strip().split(',')).astype(np.int)
@@ -69,6 +70,8 @@ def __get_data_loader(data_path, max_step, batch_size, num_questions, shuffle=Fa
 
 
 def get_data_loader(train_data_path, test_data_path, max_step, batch_size, num_questions):
+    print('loading train data:')
     train_data_loader = __get_data_loader(train_data_path, max_step, batch_size, num_questions, True)
+    print('loading test data:')
     test_data_loader = __get_data_loader(test_data_path, max_step, batch_size, num_questions, False)
     return train_data_loader, test_data_loader
