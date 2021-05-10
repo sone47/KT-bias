@@ -30,11 +30,13 @@ class Net(nn.Module):
 
 def process_raw_pred(raw_question_matrix, raw_pred, num_questions: int) -> tuple:
     question_matrix = raw_question_matrix[:, 0: num_questions] + raw_question_matrix[:, num_questions:]
+    valid_questions = np.argwhere(question_matrix.numpy() == 1)[:, 1][1:]
+    valid_length = len(valid_questions)
+
     answer_pred_matrix = raw_pred[: -1].mm(question_matrix[1:].t())
-    index = torch.LongTensor([range(answer_pred_matrix.shape[0])])
-    pred = answer_pred_matrix.gather(0, index)[0]
+    pred = answer_pred_matrix.diagonal(0)
     truth = (((raw_question_matrix[:, 0: num_questions] - raw_question_matrix[:, num_questions:]).sum(1) + 1) // 2)[1:]
-    return pred, truth
+    return pred[: valid_length], truth[: valid_length], valid_questions
 
 
 class DKT:
@@ -54,9 +56,9 @@ class DKT:
                 batch_size = batch.shape[0]
                 loss = torch.Tensor([0.0])
                 for student in range(batch_size):
-                    pred, truth = process_raw_pred(batch[student], integrated_pred[student], self.num_questions)
-                    if len(pred[pred > 0]) > 0:
-                        loss += loss_function(pred[pred > 0], truth[pred > 0])
+                    pred, truth, _ = process_raw_pred(batch[student], integrated_pred[student], self.num_questions)
+                    if len(pred) > 0:
+                        loss += loss_function(pred, truth)
                 # back propagation
                 optimizer.zero_grad()
                 loss.backward()
@@ -69,17 +71,20 @@ class DKT:
                 auc, acc, rmse = self.eval(test_data)
                 print("[Epoch %d] auc: %.6f, accuracy: %.6f, RMSE: %.6f" % (e, auc, acc, rmse))
 
-    def eval(self, test_data) -> tuple[float, float]:
+    def eval(self, test_data) -> tuple[float, float, float]:
         self.dkt_model.eval()
+        questions = np.array([], int)
         y_pred = torch.Tensor([])
         y_truth = torch.Tensor([])
         for batch in tqdm.tqdm(test_data, "evaluating"):
             integrated_pred = self.dkt_model(batch)
             batch_size = batch.shape[0]
             for student in range(batch_size):
-                pred, truth = process_raw_pred(batch[student], integrated_pred[student], self.num_questions)
-                y_pred = torch.cat([y_pred, pred[pred > 0]])
-                y_truth = torch.cat([y_truth, truth[pred > 0]])
+                pred, truth, question_id = process_raw_pred(batch[student], integrated_pred[student], self.num_questions)
+
+                y_pred = torch.cat([y_pred, pred])
+                y_truth = torch.cat([y_truth, truth])
+                questions = np.concatenate((questions, question_id))
 
         y_truth = y_truth.detach().numpy()
         y_pred = y_pred.detach().numpy()

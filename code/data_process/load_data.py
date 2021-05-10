@@ -23,14 +23,15 @@ class DataReader:
         with open(self.data_path, 'r') as d:
             for length, ques, ans in tqdm.tqdm(itertools.zip_longest(*[d] * 3), desc='loading data', total=math.ceil(num_file_line / 3)):
                 length = int(length)
-                ques = np.array(ques.strip().split(',')).astype(np.int)
-                ans = np.array(ans.strip().split(',')).astype(np.int)
+                ques = np.array(ques.strip().split(',')).astype(int)
+                ans = np.array(ans.strip().split(',')).astype(int)
                 mod = 0 if length % self.max_step == 0 else (self.max_step - length % self.max_step)
                 fill_content = np.zeros(mod) - 1
                 ques = np.append(ques, fill_content)
                 ans = np.append(ans, fill_content)
-                question_sequences = np.append(question_sequences, ques).astype(np.int)
-                answer_sequences = np.append(answer_sequences, ans).astype(np.int)
+                question_sequences = np.append(question_sequences, ques).astype(int)
+                answer_sequences = np.append(answer_sequences, ans).astype(int)
+
         return question_sequences.reshape([-1, self.max_step]), answer_sequences.reshape([-1, self.max_step])
 
 
