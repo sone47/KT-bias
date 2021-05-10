@@ -5,9 +5,12 @@ import random
 import pandas as pd
 import tqdm
 
-dataset_name = 'assistment-2009-2010-skill'
-dataset_dir = './data/2009_skill_builder_data_corrected'
-dataset_filename = 'skill_builder_data_corrected.csv'
+from code import config as conf
+
+dataset = conf.dataset
+dataset_name = conf.dataset_name[dataset]
+dataset_dir = './data/' + conf.dataset_dirname[dataset]
+dataset_filename = conf.dataset_filename[dataset]
 dataset_path = dataset_dir + '/' + dataset_filename
 
 # download raw dataset
