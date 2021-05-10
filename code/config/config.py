@@ -1,8 +1,6 @@
 # coding: utf-8
 # 2021/5/10 @ sone
 
-dataset = 'assist2009'
-
 dataset_name = {
     'assist2009': 'assistment-2009-2010-skill'
 }
@@ -18,3 +16,10 @@ dataset_filename = {
 num_questions = {
     'assist2009': 124
 }
+
+dataset = 'assist2009'
+
+batch_size = 64
+hidden_size = 10
+num_layers = 2
+max_step = 50
