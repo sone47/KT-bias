@@ -7,8 +7,7 @@ import numpy as np
 import torch
 import tqdm
 from torch import nn
-from torch.autograd import Variable
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, accuracy_score
 
 
 class Net(nn.Module):
@@ -67,10 +66,10 @@ class DKT:
             print("[Epoch %d] LogisticLoss: %.6f" % (e, float(np.mean(losses))))
 
             if test_data is not None:
-                auc = self.eval(test_data)
-                print("[Epoch %d] auc: %.6f" % (e, auc))
+                auc, acc = self.eval(test_data)
+                print("[Epoch %d] auc: %.6f, accuracy: %.6f" % (e, auc, acc))
 
-    def eval(self, test_data) -> float:
+    def eval(self, test_data) -> tuple[float, float]:
         self.dkt_model.eval()
         y_pred = torch.Tensor([])
         y_truth = torch.Tensor([])
@@ -82,7 +81,9 @@ class DKT:
                 y_pred = torch.cat([y_pred, pred[pred > 0]])
                 y_truth = torch.cat([y_truth, truth[pred > 0]])
 
-        return roc_auc_score(y_truth.detach().numpy(), y_pred.detach().numpy())
+        y_truth = y_truth.detach().numpy()
+        y_pred = y_pred.detach().numpy()
+        return roc_auc_score(y_truth, y_pred), accuracy_score(y_truth, y_pred >= 0.5)
 
     def save(self, filepath):
         torch.save(self.dkt_model.state_dict(), filepath)
