@@ -17,7 +17,12 @@ num_questions = {
     'assist2009': 124
 }
 
+data_dir = './data'
 dataset = 'assist2009'
+
+train_filename = 'train.txt'
+valid_filename = 'valid.txt'
+test_filename = 'test.txt'
 
 batch_size = 64
 hidden_size = 10

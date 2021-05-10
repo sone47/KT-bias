@@ -9,13 +9,12 @@ from code import config as conf
 
 dataset = conf.dataset
 dataset_name = conf.dataset_name[dataset]
-dataset_dir = './data/' + conf.dataset_dirname[dataset]
-dataset_filename = conf.dataset_filename[dataset]
-dataset_path = dataset_dir + '/' + dataset_filename
+dataset_dir = os.path.join(conf.data_dir, conf.dataset_dirname[dataset])
+dataset_path = os.path.join(dataset_dir, conf.dataset_filename[dataset])
 
 # download raw dataset
 if not os.path.exists(dataset_path):
-    get_data(dataset_name, './data/')
+    get_data(dataset_name, conf.data_dir)
 
 # read dataset and select columns
 data = pd.read_csv(
@@ -82,9 +81,9 @@ def sequences2tl(seqs, target_path):
 
 
 # save triple line format for other tasks
-train_data_path = dataset_dir + '/train.txt'
-valid_data_path = dataset_dir + '/valid.txt'
-test_data_path = dataset_dir + '/test.txt'
+train_data_path = os.path.join(dataset_dir, conf.train_filename)
+valid_data_path = os.path.join(dataset_dir, conf.valid_filename)
+test_data_path = os.path.join(dataset_dir, conf.test_filename)
 if not os.path.exists(train_data_path):
     sequences2tl(train_sequences, train_data_path)
 if not os.path.exists(valid_data_path):

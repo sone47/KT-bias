@@ -1,6 +1,8 @@
 # coding: utf-8
 # 2021/5/11 @ sone
 
+import os.path as path
+
 from sklearn.metrics import accuracy_score
 
 from code import DKT, get_data_loader
@@ -16,9 +18,9 @@ MAX_STEP = conf.max_step
 
 dkt = DKT(NUM_QUESTIONS, HIDDEN_SIZE, NUM_LAYERS)
 
-train_data_path = './data/2009_skill_builder_data_corrected/train.txt'
-valid_data_path = './data/2009_skill_builder_data_corrected/valid.txt'
-test_data_path = './data/2009_skill_builder_data_corrected/test.txt'
+train_data_path = path.join(conf.data_dir, conf.dataset_dirname[dataset], conf.train_filename)
+valid_data_path = path.join(conf.data_dir, conf.dataset_dirname[dataset], conf.valid_filename)
+test_data_path = path.join(conf.data_dir, conf.dataset_dirname[dataset], conf.test_filename)
 train_loader, valid_loader, test_loader = get_data_loader(train_data_path, valid_data_path, test_data_path, MAX_STEP,
                                                           BATCH_SIZE, NUM_QUESTIONS)
 
