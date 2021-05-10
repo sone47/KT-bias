@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import tqdm
 from torch import nn
-from sklearn.metrics import roc_auc_score, accuracy_score
+from sklearn.metrics import roc_auc_score, accuracy_score, mean_squared_error
 
 
 class Net(nn.Module):
@@ -66,8 +66,8 @@ class DKT:
             print("[Epoch %d] LogisticLoss: %.6f" % (e, float(np.mean(losses))))
 
             if test_data is not None:
-                auc, acc = self.eval(test_data)
-                print("[Epoch %d] auc: %.6f, accuracy: %.6f" % (e, auc, acc))
+                auc, acc, rmse = self.eval(test_data)
+                print("[Epoch %d] auc: %.6f, accuracy: %.6f, RMSE: %.6f" % (e, auc, acc, rmse))
 
     def eval(self, test_data) -> tuple[float, float]:
         self.dkt_model.eval()
@@ -83,7 +83,11 @@ class DKT:
 
         y_truth = y_truth.detach().numpy()
         y_pred = y_pred.detach().numpy()
-        return roc_auc_score(y_truth, y_pred), accuracy_score(y_truth, y_pred >= 0.5)
+        return (
+            roc_auc_score(y_truth, y_pred),
+            accuracy_score(y_truth, y_pred >= 0.5),
+            np.sqrt(mean_squared_error(y_truth, y_pred))
+        )
 
     def save(self, filepath):
         torch.save(self.dkt_model.state_dict(), filepath)

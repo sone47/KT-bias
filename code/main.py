@@ -22,5 +22,5 @@ dkt.train(train_loader, valid_loader, epoch=5)
 dkt.save("dkt.params")
 
 dkt.load("dkt.params")
-auc, acc = dkt.eval(test_loader)
-print("auc: %.6f, accuracy: %.6f" % (auc, acc))
+auc, acc, rmse = dkt.eval(test_loader)
+print("auc: %.6f, accuracy: %.6f, RMSE: %.6f" % (auc, acc, rmse))
