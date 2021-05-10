@@ -69,9 +69,11 @@ def __get_data_loader(data_path, max_step, batch_size, num_questions, shuffle=Fa
     return data_loader
 
 
-def get_data_loader(train_data_path, test_data_path, max_step, batch_size, num_questions):
+def get_data_loader(train_data_path, valid_data_path, test_data_path, max_step, batch_size, num_questions):
     print('loading train data:')
     train_data_loader = __get_data_loader(train_data_path, max_step, batch_size, num_questions, True)
+    print('loading valid data:')
+    valid_data_loader = __get_data_loader(valid_data_path, max_step, batch_size, num_questions, False)
     print('loading test data:')
     test_data_loader = __get_data_loader(test_data_path, max_step, batch_size, num_questions, False)
-    return train_data_loader, test_data_loader
+    return train_data_loader, valid_data_loader, test_data_loader
