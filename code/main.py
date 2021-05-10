@@ -2,7 +2,7 @@
 # 2021/5/7 @ sone
 
 from models import DKT
-from data import get_data_loader
+from data_process import get_data_loader
 
 
 NUM_QUESTIONS = 124

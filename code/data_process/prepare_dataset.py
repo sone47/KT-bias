@@ -5,13 +5,14 @@ import random
 import pandas as pd
 import tqdm
 
-dataset_dir = '2009_skill_builder_data_corrected'
+dataset_name = 'assistment-2009-2010-skill'
+dataset_dir = './data/2009_skill_builder_data_corrected'
 dataset_filename = 'skill_builder_data_corrected.csv'
-dataset_path = './' + dataset_dir + '/' + dataset_filename
+dataset_path = dataset_dir + '/' + dataset_filename
 
 # download raw dataset
 if not os.path.exists(dataset_path):
-    get_data('assistment-2009-2010-skill', './')
+    get_data(dataset_name, './data/')
 
 # read dataset and select columns
 data = pd.read_csv(
@@ -61,7 +62,9 @@ def train_test_split(all_data, train_size=.7, shuffle=True):
     return all_data[: boundary], all_data[boundary:]
 
 
-train_sequences, test_sequences = train_test_split(sequences)
+# train: valid: test = 6: 2: 2
+train_sequences, test_sequences = train_test_split(sequences, 0.8)
+train_sequences, valid_sequences = train_test_split(train_sequences, 0.75, False)
 
 
 # convert sequences data to triple line txt data
@@ -76,9 +79,54 @@ def sequences2tl(seqs, target_path):
 
 
 # save triple line format for other tasks
-train_data_path = './' + dataset_dir + '/train.txt'
-test_data_path = './' + dataset_dir + '/test.txt'
+train_data_path = dataset_dir + '/train.txt'
+valid_data_path = dataset_dir + '/valid.txt'
+test_data_path = dataset_dir + '/test.txt'
 if not os.path.exists(train_data_path):
     sequences2tl(train_sequences, train_data_path)
+if not os.path.exists(valid_data_path):
+    sequences2tl(valid_sequences, valid_data_path)
 if not os.path.exists(test_data_path):
     sequences2tl(test_sequences, test_data_path)
+
+# one-hot
+
+# MAX_STEP = 50
+# NUM_QUESTIONS = num_skill
+#
+#
+# def encode_one_hot(sequences, max_step, num_questions):
+#     question_sequences = np.array([])
+#     answer_sequences = np.array([])
+#     one_hot_result = []
+#
+#     for questions, answers in tqdm.tqdm(sequences, 'convert to one-hot format: '):
+#         length = len(questions)
+#         # append questions' and answers' length to an integer multiple of max_step
+#         mod = 0 if length % max_step == 0 else (max_step - length % max_step)
+#         fill_content = np.zeros(mod) - 1
+#         questions = np.append(questions, fill_content)
+#         answers = np.append(answers, fill_content)
+#         # one hot
+#         q_seqs = questions.reshape([-1, max_step])
+#         a_seqs = answers.reshape([-1, max_step])
+#         for (i, q_seq) in enumerate(q_seqs):
+#             one_hot = np.zeros(shape=[max_step, 2 * num_questions])
+#             for j in range(max_step):
+#                 index = int(q_seq[j] if a_seqs[i][j] > 0 else q_seq[j] + num_questions)
+#                 one_hot[j][index] = 1
+#             one_hot_result = np.append(one_hot_result, one_hot)
+#
+#     return one_hot_result.reshape(-1, max_step, 2 * num_questions)
+#
+#
+# train_one_hot_path = './' + dataset_dir + '/train_data.npy'
+# test_one_hot_path = './' + dataset_dir + '/test_data.npy'
+#
+# # save one_hot data
+# if not os.path.exists(train_one_hot_path):
+#     train_data = encode_one_hot(train_sequences, MAX_STEP, NUM_QUESTIONS)
+#     np.save(train_one_hot_path, train_data)
+# if not os.path.exists(test_one_hot_path):
+#     test_data = encode_one_hot(test_sequences, MAX_STEP, NUM_QUESTIONS)
+#     np.save(test_one_hot_path, test_data)
