@@ -45,9 +45,10 @@ class DKT:
         self.num_questions = num_questions
         self.dkt_model = Net(num_questions, hidden_size, num_layers)
 
-    def train(self, train_data, test_data=None, *, epoch: int, lr=0.002) -> ...:
+    def train(self, train_data, test_data=None, *, epoch: int, lr=0.002):
         loss_function = nn.BCEWithLogitsLoss()
         optimizer = torch.optim.Adam(self.dkt_model.parameters(), lr)
+        sequences = np.array([], int)
 
         for e in range(epoch):
             losses = []
@@ -56,9 +57,10 @@ class DKT:
                 batch_size = batch.shape[0]
                 loss = torch.Tensor([0.0])
                 for student in range(batch_size):
-                    truth, pred, _ = process_raw_pred(batch[student], integrated_pred[student], self.num_questions)
+                    truth, pred, sequence = process_raw_pred(batch[student], integrated_pred[student], self.num_questions)
                     if len(pred) > 0:
                         loss += loss_function(pred, truth)
+                        sequences = np.concatenate((sequences, sequence))
                 # back propagation
                 optimizer.zero_grad()
                 loss.backward()
@@ -70,6 +72,8 @@ class DKT:
             if test_data is not None:
                 _, (auc, acc, rmse) = self.eval(test_data)
                 print("[Epoch %d] auc: %.6f, accuracy: %.6f, RMSE: %.6f" % (e, auc, acc, rmse))
+
+            return sequences
 
     def eval(self, test_data) -> tuple[tuple[np.array, np.array, np.array], tuple[float, float, float]]:
         self.dkt_model.eval()
