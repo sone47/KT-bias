@@ -10,6 +10,7 @@ dataset = conf.dataset
 dataset_name = conf.dataset_name[dataset]
 dataset_dir = os.path.join(conf.data_dir, conf.dataset_dirname[dataset])
 dataset_path = os.path.join(dataset_dir, conf.dataset_filename[dataset])
+order_field = conf.dataset_order_field[dataset]
 
 # download raw dataset
 if not os.path.exists(dataset_path):
@@ -19,7 +20,7 @@ if not os.path.exists(dataset_path):
 # read dataset and select columns
 data = pd.read_csv(
     dataset_path,
-    usecols=['order_id', 'user_id', 'sequence_id', 'skill_id', 'correct']
+    usecols=[order_field, 'user_id', 'sequence_id', 'skill_id', 'correct']
 ).fillna(0)
 
 # convert skill id to consecutive integers id
@@ -41,11 +42,11 @@ def parse_all_seq(students):
 
 
 def parse_student_seq(student):
-    student = student.drop_duplicates(subset='order_id')
+    student = student.drop_duplicates(subset=order_field)
     sequence_ids = student.sequence_id.unique()
     res_sequences = []
     for seq_id in sequence_ids:
-        seq = student[student.sequence_id == seq_id].sort_values('order_id')
+        seq = student[student.sequence_id == seq_id].sort_values(order_field)
         questions = seq.skill_id.tolist()
         answers = seq.correct.tolist()
         res_sequences.append((questions, answers))
