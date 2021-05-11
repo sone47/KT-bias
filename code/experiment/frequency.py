@@ -3,8 +3,6 @@
 
 import os.path as path
 
-import numpy as np
-
 from code import DKT, get_data_loader
 from code import config as conf
 from utils import stat_question_ratio, get_questions_perf, draw_scatter_figure, corr
@@ -47,7 +45,7 @@ for k in keys_deleted:
     del train_question_ratio[k]
     del question_perf[k]
 
-draw_scatter_figure(list(train_question_ratio.values()), list(question_perf.values()))
+draw_scatter_figure(list(train_question_ratio.values()), list(question_perf.values()), save_path='scatter.png')
 
 corr_value = corr(list(train_question_ratio.values()), list(question_perf.values()))
 print("The coefficient of correlation of frequency and accuracy is %.6f ." % corr_value)
