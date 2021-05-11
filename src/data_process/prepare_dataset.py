@@ -1,11 +1,10 @@
-from EduData import get_data
 import os
 
 import random
 import pandas as pd
 import tqdm
 
-from code import config as conf
+from src import config as conf
 
 dataset = conf.dataset
 dataset_name = conf.dataset_name[dataset]
@@ -14,6 +13,7 @@ dataset_path = os.path.join(dataset_dir, conf.dataset_filename[dataset])
 
 # download raw dataset
 if not os.path.exists(dataset_path):
+    from EduData import get_data
     get_data(dataset_name, conf.data_dir)
 
 # read dataset and select columns

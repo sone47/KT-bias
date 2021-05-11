@@ -3,8 +3,8 @@
 
 import os.path as path
 
-from code import DKT, get_data_loader
-from code import config as conf
+from src import DKT, get_data_loader
+from src import config as conf
 from utils import stat_question_ratio, get_questions_perf, draw_scatter_figure, corr
 
 dataset = conf.dataset
