@@ -73,7 +73,7 @@ class DKT:
                 _, (auc, acc, rmse) = self.eval(test_data)
                 print("[Epoch %d] auc: %.6f, accuracy: %.6f, RMSE: %.6f" % (e, auc, acc, rmse))
 
-            return sequences
+        return sequences
 
     def eval(self, test_data) -> tuple[tuple[np.array, np.array, np.array], tuple[float, float, float]]:
         self.dkt_model.eval()
