@@ -1,5 +1,6 @@
 # coding: utf-8
 # 2021/5/10 @ sone
+import os
 
 dataset_name = {
     'assist2009': 'assistment-2009-2010-skill'
@@ -17,7 +18,8 @@ num_questions = {
     'assist2009': 124
 }
 
-data_dir = './data'
+# data directory
+data_dir = os.path.join('/my project location.../KT-bias', 'data')
 dataset = 'assist2009'
 
 train_filename = 'train.txt'

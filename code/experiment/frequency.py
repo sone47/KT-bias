@@ -3,10 +3,9 @@
 
 import os.path as path
 
-from sklearn.metrics import accuracy_score
-
 from code import DKT, get_data_loader
 from code import config as conf
+from utils import stat_question_ratio, get_questions_perf
 
 dataset = conf.dataset
 
@@ -24,29 +23,17 @@ test_data_path = path.join(conf.data_dir, conf.dataset_dirname[dataset], conf.te
 train_loader, valid_loader, test_loader = get_data_loader(train_data_path, valid_data_path, test_data_path, MAX_STEP,
                                                           BATCH_SIZE, NUM_QUESTIONS)
 
-dkt.train(train_loader, valid_loader, epoch=5)
+# train model
+train_sequences = dkt.train(train_loader, valid_loader, epoch=5)
 dkt.save("dkt.params")
 
+train_question_ratio = stat_question_ratio(train_sequences, NUM_QUESTIONS)
+print(train_question_ratio)
+
+# test model
 dkt.load("dkt.params")
 (sequences, y_truth, y_pred), (auc, acc, rmse) = dkt.eval(test_loader)
 print("auc: %.6f, accuracy: %.6f, RMSE: %.6f" % (auc, acc, rmse))
 
-
-def get_questions_perf(question_sequences, truth, pred):
-    questions_perf = {}
-    for i in range(NUM_QUESTIONS):
-        index = question_sequences == i
-        q = question_sequences[index]
-        t = truth[index]
-        p = pred[index]
-        if len(q) > 0:
-            accu = accuracy_score(t, p >= 0.5)
-            questions_perf[i] = accu
-        else:
-            # -1 represents that the question has never been predicted
-            questions_perf[i] = -1
-    return questions_perf
-
-
-perf = get_questions_perf(sequences, y_truth, y_pred)
-print(perf)
+question_perf = get_questions_perf(sequences, y_truth, y_pred, NUM_QUESTIONS)
+print(question_perf)
