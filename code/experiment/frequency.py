@@ -3,9 +3,11 @@
 
 import os.path as path
 
+import numpy as np
+
 from code import DKT, get_data_loader
 from code import config as conf
-from utils import stat_question_ratio, get_questions_perf
+from utils import stat_question_ratio, get_questions_perf, draw_scatter_figure, corr
 
 dataset = conf.dataset
 
@@ -28,7 +30,6 @@ train_sequences = dkt.train(train_loader, valid_loader, epoch=5)
 dkt.save("dkt.params")
 
 train_question_ratio = stat_question_ratio(train_sequences, NUM_QUESTIONS)
-print(train_question_ratio)
 
 # test model
 dkt.load("dkt.params")
@@ -36,4 +37,17 @@ dkt.load("dkt.params")
 print("auc: %.6f, accuracy: %.6f, RMSE: %.6f" % (auc, acc, rmse))
 
 question_perf = get_questions_perf(sequences, y_truth, y_pred, NUM_QUESTIONS)
-print(question_perf)
+
+keys_deleted = []
+for k in train_question_ratio.keys():
+    if train_question_ratio[k] == 0 or question_perf[k] == -1:
+        keys_deleted.append(k)
+
+for k in keys_deleted:
+    del train_question_ratio[k]
+    del question_perf[k]
+
+draw_scatter_figure(list(train_question_ratio.values()), list(question_perf.values()))
+
+corr_value = corr(list(train_question_ratio.values()), list(question_perf.values()))
+print("The coefficient of correlation of frequency and accuracy is %.6f ." % corr_value)
