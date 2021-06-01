@@ -27,7 +27,9 @@ dataset_order_field = {
 }
 
 num_questions = {
-    'assist2009': 124
+    'assist2009': 124,
+    'assist2012': 266,
+    'assist2015': 0
 }
 
 # data directory
@@ -43,3 +45,5 @@ batch_size = 64
 hidden_size = 10
 num_layers = 2
 max_step = 50
+
+log = 'log'

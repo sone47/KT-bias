@@ -45,10 +45,18 @@ class DKT:
         self.num_questions = num_questions
         self.dkt_model = Net(num_questions, hidden_size, num_layers)
 
-    def train(self, train_data, test_data=None, *, epoch: int, lr=0.002):
+    def train(self, train_data, test_data=None, *, epoch: int, lr=0.002, train_log_file='', test_log_file=''):
         loss_function = nn.BCEWithLogitsLoss()
         optimizer = torch.optim.Adam(self.dkt_model.parameters(), lr)
         sequences = np.array([], int)
+
+        if train_log_file:
+            with open(train_log_file, 'w') as log_tf:
+                log_tf.write('epoch, loss\n')
+
+        if test_data and test_log_file:
+            with open(test_log_file, 'w') as log_tf:
+                log_tf.write('epoch, auc, acc\n')
 
         for e in range(epoch):
             losses = []
@@ -68,10 +76,16 @@ class DKT:
 
                 losses.append(loss.mean().item())
             print("[Epoch %d] LogisticLoss: %.6f" % (e, float(np.mean(losses))))
+            if train_log_file:
+                with open(train_log_file, 'a') as log_tf:
+                    log_tf.write('{epoch},{loss: 8.5f}\n'.format(epoch=e, loss=sum(losses)/len(losses)))
 
             if test_data is not None:
                 _, (auc, acc, rmse) = self.eval(test_data)
                 print("[Epoch %d] auc: %.6f, accuracy: %.6f, RMSE: %.6f" % (e, auc, acc, rmse))
+                if test_log_file:
+                    with open(test_log_file, 'a') as log_tf:
+                        log_tf.write('{epoch},{auc: 8.5f},{acc:3.3f}\n'.format(epoch=e, auc=auc, acc=100 * acc))
 
         return sequences
 
@@ -80,6 +94,7 @@ class DKT:
         sequences = np.array([], int)
         y_pred = torch.Tensor([])
         y_truth = torch.Tensor([])
+
         for batch in tqdm.tqdm(test_data, "evaluating"):
             integrated_pred = self.dkt_model(batch)
             batch_size = batch.shape[0]
@@ -92,6 +107,7 @@ class DKT:
 
         y_truth = y_truth.detach().numpy()
         y_pred = y_pred.detach().numpy()
+
         return (
             sequences,
             y_truth,

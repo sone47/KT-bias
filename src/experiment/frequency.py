@@ -23,11 +23,16 @@ test_data_path = path.join(conf.data_dir, conf.dataset_dirname[dataset], conf.te
 train_loader, valid_loader, test_loader = get_data_loader(train_data_path, valid_data_path, test_data_path, MAX_STEP,
                                                           BATCH_SIZE, NUM_QUESTIONS)
 
-# train model
-train_sequences = dkt.train(train_loader, valid_loader, epoch=5)
-dkt.save("dkt.params")
+log_train_file = conf.log + '-train.log'
+log_valid_file = conf.log + '-valid.log'
 
-train_question_ratio = stat_question_ratio(train_sequences, NUM_QUESTIONS)
+# train model
+train_sequences = dkt.train(
+    train_loader, valid_loader,
+    epoch=5,
+    train_log_file=log_train_file, test_log_file=log_valid_file,
+)
+dkt.save("dkt.params")
 
 # test model
 dkt.load("dkt.params")
@@ -35,6 +40,9 @@ dkt.load("dkt.params")
 print("auc: %.6f, accuracy: %.6f, RMSE: %.6f" % (auc, acc, rmse))
 
 question_perf = get_questions_perf(sequences, y_truth, y_pred, NUM_QUESTIONS)
+
+# post-process
+train_question_ratio = stat_question_ratio(train_sequences, NUM_QUESTIONS)
 
 keys_deleted = []
 for k in train_question_ratio.keys():
@@ -49,10 +57,8 @@ for k in keys_deleted:
 question_perf = list(question_perf.values())
 train_question_ratio = list(train_question_ratio.values())
 draw_scatter_figure(
-    question_perf,
-    train_question_ratio,
-    x_label='acc',
-    y_label='freq',
+    question_perf, train_question_ratio,
+    x_label='acc', y_label='freq',
     save_path=dataset + '-scatter.png',
 )
 
