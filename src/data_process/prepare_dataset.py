@@ -22,6 +22,7 @@ data = pd.read_csv(
     dataset_path,
     usecols=[order_field, 'user_id', 'sequence_id', 'skill_id', 'correct']
 ).fillna(0)
+data['correct'] = data['correct'].astype('int')
 
 # convert skill id to consecutive integers id
 raw_question = data.skill_id.unique().tolist()

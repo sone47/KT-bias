@@ -45,7 +45,16 @@ for k in keys_deleted:
     del train_question_ratio[k]
     del question_perf[k]
 
-draw_scatter_figure(list(train_question_ratio.values()), list(question_perf.values()), save_path='scatter.png')
 
-corr_value = corr(list(train_question_ratio.values()), list(question_perf.values()))
-print("The coefficient of correlation of frequency and accuracy is %.6f ." % corr_value)
+question_perf = list(question_perf.values())
+train_question_ratio = list(train_question_ratio.values())
+draw_scatter_figure(
+    question_perf,
+    train_question_ratio,
+    x_label='acc',
+    y_label='freq',
+    save_path=dataset + '-scatter.png',
+)
+
+corr_value = corr(question_perf, train_question_ratio)
+print("The coefficient of correlation of frequency and accuracy is %.6f." % corr_value)

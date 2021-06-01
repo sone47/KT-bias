@@ -32,8 +32,11 @@ def get_questions_perf(question_sequences, truth, pred, num_questions) -> dict:
     return questions_perf
 
 
-def draw_scatter_figure(x, y, figsize=[10, 10], save_path='') -> ...:
-    plt.figure(figsize=figsize)
+def draw_scatter_figure(x, y, x_label='', y_label='', title='', save_path='', fig_size=[10, 10]) -> ...:
+    plt.figure(figsize=fig_size)
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
     plt.scatter(x, y)
     plt.grid()
     if save_path is not '':
