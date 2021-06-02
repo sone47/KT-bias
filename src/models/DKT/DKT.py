@@ -11,11 +11,12 @@ from sklearn.metrics import roc_auc_score, accuracy_score, mean_squared_error
 
 
 class Net(nn.Module):
-    def __init__(self, num_questions, hidden_size, num_layers):
+    def __init__(self, num_questions, d_qa_vec, hidden_size, num_layers):
         super(Net, self).__init__()
+        self.qa_emb = nn.Embedding(num_questions * 2, d_qa_vec)
         self.hidden_dim = hidden_size
         self.layer_dim = num_layers
-        self.rnn = nn.LSTM(num_questions * 2, hidden_size, num_layers, batch_first=True)
+        self.rnn = nn.LSTM(d_qa_vec, hidden_size, num_layers, batch_first=True)
         self.fc = nn.Linear(self.hidden_dim, num_questions)
 
     def forward(self, x) -> torch.Tensor:
@@ -23,27 +24,26 @@ class Net(nn.Module):
             torch.zeros(self.layer_dim, x.size(0), self.hidden_dim),
             torch.zeros(self.layer_dim, x.size(0), self.hidden_dim)
         )
-        out, _ = self.rnn(x, h0)
+        out, _ = self.rnn(self.qa_emb(x), h0)
         res = torch.sigmoid(self.fc(out))
         return res
 
 
-def process_raw_pred(raw_question_matrix, raw_pred, num_questions: int) -> tuple:
-    question_matrix = raw_question_matrix[:, 0: num_questions] + raw_question_matrix[:, num_questions:]
-    valid_questions = np.argwhere(question_matrix.numpy() == 1)[:, 1][1:]
-    valid_length = len(valid_questions)
-
-    answer_pred_matrix = raw_pred[: -1].mm(question_matrix[1:].t())
-    pred = answer_pred_matrix.diagonal(0)
-    truth = (((raw_question_matrix[:, 0: num_questions] - raw_question_matrix[:, num_questions:]).sum(1) + 1) // 2)[1:]
-    return truth[: valid_length], pred[: valid_length], valid_questions
+def process_raw_pred(question_matrix, raw_pred, num_questions: int) -> tuple:
+    question_matrix = question_matrix[question_matrix > 0]
+    valid_length = len(question_matrix)
+    valid_questions = (question_matrix % num_questions)[1:]
+    raw_pred = raw_pred[: valid_length - 1]
+    pred = raw_pred.gather(1, valid_questions.view(-1, 1)).flatten()
+    truth = (question_matrix // num_questions)[1: valid_length]
+    return truth, pred, valid_questions
 
 
 class DKT:
-    def __init__(self, num_questions, hidden_size, num_layers) -> ...:
+    def __init__(self, num_questions, d_qa_vec, hidden_size, num_layers) -> ...:
         super(DKT, self).__init__()
         self.num_questions = num_questions
-        self.dkt_model = Net(num_questions, hidden_size, num_layers)
+        self.dkt_model = Net(num_questions, d_qa_vec, hidden_size, num_layers)
 
     def train(self, train_data, test_data=None, *, epoch: int, lr=0.002, train_log_file='', test_log_file=''):
         loss_function = nn.BCEWithLogitsLoss()
@@ -65,9 +65,10 @@ class DKT:
                 batch_size = batch.shape[0]
                 loss = torch.Tensor([0.0])
                 for student in range(batch_size):
-                    truth, pred, sequence = process_raw_pred(batch[student], integrated_pred[student], self.num_questions)
+                    truth, pred, sequence = process_raw_pred(batch[student], integrated_pred[student],
+                                                             self.num_questions)
                     if len(pred) > 0:
-                        loss += loss_function(pred, truth)
+                        loss += loss_function(pred, truth.float())
                         sequences = np.concatenate((sequences, sequence))
                 # back propagation
                 optimizer.zero_grad()

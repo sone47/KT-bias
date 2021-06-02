@@ -12,60 +12,47 @@ import tqdm
 
 
 class DataReader:
-    def __init__(self, data_path, seq_len):
+    def __init__(self, data_path, seq_len, num_question):
         self.data_path = data_path
         self.seq_len = seq_len
+        self.n_question = num_question
 
     def get_data(self):
-        q_data = np.array([])
         qa_data = np.array([])
         num_file_line = sum([1 for i in open(self.data_path, 'r')])
         with open(self.data_path, 'r') as d:
-            for length, Q, A in tqdm.tqdm(itertools.zip_longest(*[d] * 3), desc='loading data', total=math.ceil(num_file_line / 3)):
+            for length, Q, A in tqdm.tqdm(itertools.zip_longest(*[d] * 3), desc='loading data',
+                                          total=math.ceil(num_file_line / 3)):
                 length = int(length)
                 question_sequence = np.array(Q.strip().split(',')).astype(int)
                 answer_sequence = np.array(A.strip().split(',')).astype(int)
                 mod = 0 if length % self.seq_len == 0 else (self.seq_len - length % self.seq_len)
-                fill_content = np.zeros(mod) - 1
-                question_sequence = np.append(question_sequence, fill_content)
-                answer_sequence = np.append(answer_sequence, fill_content)
-                q_data = np.append(q_data, question_sequence).astype(int)
+                fill_content = np.zeros(mod)
+                answer_sequence = np.append(answer_sequence * self.n_question + question_sequence, fill_content)
                 qa_data = np.append(qa_data, answer_sequence).astype(int)
 
-        return q_data.reshape([-1, self.seq_len]), qa_data.reshape([-1, self.seq_len])
+        return qa_data.reshape([-1, self.seq_len])
 
 
 class DKTDataset(Dataset):
-    def __init__(self, ques, ans, seq_len, num_questions):
-        self.ques = ques
-        self.ans = ans
+    def __init__(self, qa_sequences, seq_len, num_questions):
+        self.qa_sequences = qa_sequences
         self.seq_len = seq_len
         self.num_questions = num_questions
 
     def __len__(self):
         # number of sequences
-        return len(self.ques)
+        return len(self.qa_sequences)
 
     def __getitem__(self, index):
-        questions = self.ques[index]
-        answers = self.ans[index]
-        one_hot_data = self.one_hot(questions, answers)
-        return torch.FloatTensor(one_hot_data.tolist())
-
-    def one_hot(self, questions, answers):
-        result = np.zeros(shape=[self.seq_len, 2 * self.num_questions])
-        for i in range(self.seq_len):
-            if answers[i] > 0:
-                result[i][questions[i]] = 1
-            elif answers[i] == 0:
-                result[i][questions[i] + self.num_questions] = 1
-        return result
+        qa = self.qa_sequences[index]
+        return torch.tensor(qa.tolist())
 
 
 def __get_data_loader(data_path, seq_len, batch_size, num_questions, shuffle=False):
-    handle = DataReader(data_path, seq_len)
-    ques, ans = handle.get_data()
-    dataset = DKTDataset(ques, ans, seq_len, num_questions)
+    handle = DataReader(data_path, seq_len, num_questions)
+    qa_data = handle.get_data()
+    dataset = DKTDataset(qa_data, seq_len, num_questions)
     data_loader = data.DataLoader(dataset, batch_size, shuffle)
     return data_loader
 

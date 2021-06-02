@@ -15,7 +15,7 @@ HIDDEN_SIZE = conf.hidden_size
 NUM_LAYERS = conf.num_layers
 SEQ_LEN = conf.seq_len
 
-dkt = DKT(NUM_QUESTIONS, HIDDEN_SIZE, NUM_LAYERS)
+dkt = DKT(NUM_QUESTIONS, NUM_QUESTIONS // 10, HIDDEN_SIZE, NUM_LAYERS)
 
 train_data_path = path.join(conf.data_dir, conf.dataset_dirname[dataset], conf.train_filename)
 valid_data_path = path.join(conf.data_dir, conf.dataset_dirname[dataset], conf.valid_filename)

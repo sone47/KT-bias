@@ -21,8 +21,13 @@ if not os.path.exists(dataset_path):
 data = pd.read_csv(
     dataset_path,
     usecols=[order_field, 'user_id', 'sequence_id', 'skill_id', 'correct']
-).fillna(0)
+)
 data['correct'] = data['correct'].astype('int')
+
+nun_question = len(data.skill_id.unique())
+print("number of skills: %d" % nun_question)
+
+data.skill_id = data.skill_id.fillna(nun_question)
 
 # convert skill id to consecutive integers id
 raw_question = data.skill_id.unique().tolist()
@@ -30,13 +35,11 @@ raw_question = data.skill_id.unique().tolist()
 question2id = {q: i for i, q in enumerate(raw_question)}
 data['skill_id'] = data['skill_id'].map(question2id)
 
-print("number of skills: %d" % len(raw_question))
-
 
 # parse mixture to sequences
 def parse_all_seq(students):
     all_sequences = []
-    for student_id in tqdm.tqdm(students, 'parse student sequence:\t'):
+    for student_id in tqdm.tqdm(students, 'parse student sequence:'):
         student_sequence = parse_student_seq(data[data.user_id == student_id])
         all_sequences.extend(student_sequence)
     return all_sequences
@@ -92,45 +95,3 @@ if not os.path.exists(valid_data_path):
     sequences2tl(valid_sequences, valid_data_path)
 if not os.path.exists(test_data_path):
     sequences2tl(test_sequences, test_data_path)
-
-# one-hot
-
-# MAX_STEP = 50
-# NUM_QUESTIONS = num_skill
-#
-#
-# def encode_one_hot(sequences, max_step, num_questions):
-#     question_sequences = np.array([])
-#     answer_sequences = np.array([])
-#     one_hot_result = []
-#
-#     for questions, answers in tqdm.tqdm(sequences, 'convert to one-hot format: '):
-#         length = len(questions)
-#         # append questions' and answers' length to an integer multiple of max_step
-#         mod = 0 if length % max_step == 0 else (max_step - length % max_step)
-#         fill_content = np.zeros(mod) - 1
-#         questions = np.append(questions, fill_content)
-#         answers = np.append(answers, fill_content)
-#         # one hot
-#         q_seqs = questions.reshape([-1, max_step])
-#         a_seqs = answers.reshape([-1, max_step])
-#         for (i, q_seq) in enumerate(q_seqs):
-#             one_hot = np.zeros(shape=[max_step, 2 * num_questions])
-#             for j in range(max_step):
-#                 index = int(q_seq[j] if a_seqs[i][j] > 0 else q_seq[j] + num_questions)
-#                 one_hot[j][index] = 1
-#             one_hot_result = np.append(one_hot_result, one_hot)
-#
-#     return one_hot_result.reshape(-1, max_step, 2 * num_questions)
-#
-#
-# train_one_hot_path = './' + dataset_dir + '/train_data.npy'
-# test_one_hot_path = './' + dataset_dir + '/test_data.npy'
-#
-# # save one_hot data
-# if not os.path.exists(train_one_hot_path):
-#     train_data = encode_one_hot(train_sequences, MAX_STEP, NUM_QUESTIONS)
-#     np.save(train_one_hot_path, train_data)
-# if not os.path.exists(test_one_hot_path):
-#     test_data = encode_one_hot(test_sequences, MAX_STEP, NUM_QUESTIONS)
-#     np.save(test_one_hot_path, test_data)
