@@ -13,14 +13,14 @@ NUM_QUESTIONS = conf.num_questions[dataset]
 BATCH_SIZE = conf.batch_size
 HIDDEN_SIZE = conf.hidden_size
 NUM_LAYERS = conf.num_layers
-MAX_STEP = conf.max_step
+SEQ_LEN = conf.seq_len
 
 dkt = DKT(NUM_QUESTIONS, HIDDEN_SIZE, NUM_LAYERS)
 
 train_data_path = path.join(conf.data_dir, conf.dataset_dirname[dataset], conf.train_filename)
 valid_data_path = path.join(conf.data_dir, conf.dataset_dirname[dataset], conf.valid_filename)
 test_data_path = path.join(conf.data_dir, conf.dataset_dirname[dataset], conf.test_filename)
-train_loader, valid_loader, test_loader = get_data_loader(train_data_path, valid_data_path, test_data_path, MAX_STEP,
+train_loader, valid_loader, test_loader = get_data_loader(train_data_path, valid_data_path, test_data_path, SEQ_LEN,
                                                           BATCH_SIZE, NUM_QUESTIONS)
 
 log_train_file = conf.log + '-train.log'

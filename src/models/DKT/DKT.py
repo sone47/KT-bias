@@ -50,10 +50,10 @@ class DKT:
         optimizer = torch.optim.Adam(self.dkt_model.parameters(), lr)
         sequences = np.array([], int)
 
+        # prepare logging file
         if train_log_file:
             with open(train_log_file, 'w') as log_tf:
                 log_tf.write('epoch, loss\n')
-
         if test_data and test_log_file:
             with open(test_log_file, 'w') as log_tf:
                 log_tf.write('epoch, auc, acc\n')

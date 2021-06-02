@@ -44,6 +44,6 @@ test_filename = 'test.txt'
 batch_size = 64
 hidden_size = 10
 num_layers = 2
-max_step = 50
+seq_len = 50
 
 log = 'log'

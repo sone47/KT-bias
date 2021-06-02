@@ -12,38 +12,38 @@ import tqdm
 
 
 class DataReader:
-    def __init__(self, data_path, max_step):
+    def __init__(self, data_path, seq_len):
         self.data_path = data_path
-        self.max_step = max_step
+        self.seq_len = seq_len
 
     def get_data(self):
-        question_sequences = np.array([])
-        answer_sequences = np.array([])
+        q_data = np.array([])
+        qa_data = np.array([])
         num_file_line = sum([1 for i in open(self.data_path, 'r')])
         with open(self.data_path, 'r') as d:
-            for length, ques, ans in tqdm.tqdm(itertools.zip_longest(*[d] * 3), desc='loading data', total=math.ceil(num_file_line / 3)):
+            for length, Q, A in tqdm.tqdm(itertools.zip_longest(*[d] * 3), desc='loading data', total=math.ceil(num_file_line / 3)):
                 length = int(length)
-                ques = np.array(ques.strip().split(',')).astype(int)
-                ans = np.array(ans.strip().split(',')).astype(int)
-                mod = 0 if length % self.max_step == 0 else (self.max_step - length % self.max_step)
+                question_sequence = np.array(Q.strip().split(',')).astype(int)
+                answer_sequence = np.array(A.strip().split(',')).astype(int)
+                mod = 0 if length % self.seq_len == 0 else (self.seq_len - length % self.seq_len)
                 fill_content = np.zeros(mod) - 1
-                ques = np.append(ques, fill_content)
-                ans = np.append(ans, fill_content)
-                question_sequences = np.append(question_sequences, ques).astype(int)
-                answer_sequences = np.append(answer_sequences, ans).astype(int)
+                question_sequence = np.append(question_sequence, fill_content)
+                answer_sequence = np.append(answer_sequence, fill_content)
+                q_data = np.append(q_data, question_sequence).astype(int)
+                qa_data = np.append(qa_data, answer_sequence).astype(int)
 
-        return question_sequences.reshape([-1, self.max_step]), answer_sequences.reshape([-1, self.max_step])
+        return q_data.reshape([-1, self.seq_len]), qa_data.reshape([-1, self.seq_len])
 
 
 class DKTDataset(Dataset):
-    def __init__(self, ques, ans, max_step, num_questions):
+    def __init__(self, ques, ans, seq_len, num_questions):
         self.ques = ques
         self.ans = ans
-        self.max_step = max_step
+        self.seq_len = seq_len
         self.num_questions = num_questions
 
     def __len__(self):
-        # number of students
+        # number of sequences
         return len(self.ques)
 
     def __getitem__(self, index):
@@ -53,8 +53,8 @@ class DKTDataset(Dataset):
         return torch.FloatTensor(one_hot_data.tolist())
 
     def one_hot(self, questions, answers):
-        result = np.zeros(shape=[self.max_step, 2 * self.num_questions])
-        for i in range(self.max_step):
+        result = np.zeros(shape=[self.seq_len, 2 * self.num_questions])
+        for i in range(self.seq_len):
             if answers[i] > 0:
                 result[i][questions[i]] = 1
             elif answers[i] == 0:
@@ -62,19 +62,19 @@ class DKTDataset(Dataset):
         return result
 
 
-def __get_data_loader(data_path, max_step, batch_size, num_questions, shuffle=False):
-    handle = DataReader(data_path, max_step)
+def __get_data_loader(data_path, seq_len, batch_size, num_questions, shuffle=False):
+    handle = DataReader(data_path, seq_len)
     ques, ans = handle.get_data()
-    dataset = DKTDataset(ques, ans, max_step, num_questions)
+    dataset = DKTDataset(ques, ans, seq_len, num_questions)
     data_loader = data.DataLoader(dataset, batch_size, shuffle)
     return data_loader
 
 
-def get_data_loader(train_data_path, valid_data_path, test_data_path, max_step, batch_size, num_questions):
+def get_data_loader(train_data_path, valid_data_path, test_data_path, seq_len, batch_size, num_questions):
     print('loading train data:')
-    train_data_loader = __get_data_loader(train_data_path, max_step, batch_size, num_questions, True)
+    train_data_loader = __get_data_loader(train_data_path, seq_len, batch_size, num_questions, True)
     print('loading valid data:')
-    valid_data_loader = __get_data_loader(valid_data_path, max_step, batch_size, num_questions, False)
+    valid_data_loader = __get_data_loader(valid_data_path, seq_len, batch_size, num_questions, False)
     print('loading test data:')
-    test_data_loader = __get_data_loader(test_data_path, max_step, batch_size, num_questions, False)
+    test_data_loader = __get_data_loader(test_data_path, seq_len, batch_size, num_questions, False)
     return train_data_loader, valid_data_loader, test_data_loader
