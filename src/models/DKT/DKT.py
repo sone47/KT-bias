@@ -50,7 +50,7 @@ class DKT:
         self.dkt_model = Net(num_questions, d_qa_vec, hidden_size, num_layers, device).to(device)
         self.device = device
 
-    def train(self, train_data, test_data=None, *, epoch: int, lr=0.002, train_log_file='', test_log_file=''):
+    def train(self, train_data, test_data=None, epoch: int = 5, lr=0.002, train_log_file='', test_log_file=''):
         loss_function = nn.BCEWithLogitsLoss()
         optimizer = torch.optim.Adam(self.dkt_model.parameters(), lr)
         sequences = torch.tensor([]).to(self.device)
@@ -84,19 +84,20 @@ class DKT:
             print("[Epoch %d] LogisticLoss: %.6f" % (e, float(np.mean(losses))))
             if train_log_file:
                 with open(train_log_file, 'a') as log_tf:
-                    log_tf.write('{epoch},{loss: 8.5f}\n'.format(epoch=e, loss=sum(losses)/len(losses)))
+                    log_tf.write('{epoch},{loss: 8.5f}\n'.format(epoch=e, loss=sum(losses) / len(losses)))
 
             if test_data is not None:
-                _, (auc, acc, rmse) = self.eval(test_data)
+                _, (auc, acc, rmse) = self.eval(test_data, False)
                 print("[Epoch %d] auc: %.6f, accuracy: %.6f, RMSE: %.6f" % (e, auc, acc, rmse))
                 if test_log_file:
                     with open(test_log_file, 'a') as log_tf:
                         log_tf.write('{epoch},{auc: 8.5f},{acc:3.3f}\n'.format(epoch=e, auc=auc, acc=100 * acc))
 
-        return sequences.numpy()
+        return sequences.cpu().numpy()
 
-    def eval(self, test_data) -> tuple:
-        self.dkt_model.eval()
+    def eval(self, test_data, evaluation: bool = True) -> tuple:
+        if evaluation:
+            self.dkt_model.eval()
         sequences = torch.tensor([]).to(self.device)
         y_pred = torch.Tensor([]).to(self.device)
         y_truth = torch.Tensor([]).to(self.device)
@@ -107,22 +108,22 @@ class DKT:
             for student in range(batch_size):
                 truth, pred, sequence = process_raw_pred(batch[student], integrated_pred[student], self.num_questions)
 
-                y_pred = torch.cat([y_pred, pred])
-                y_truth = torch.cat([y_truth, truth])
+                y_pred = torch.cat([y_pred, pred.float()])
+                y_truth = torch.cat([y_truth, truth.float()])
                 sequences = torch.cat((sequences, sequence.float()))
 
-        y_truth = y_truth.detach().numpy()
-        y_pred = y_pred.detach().numpy()
+        y_truth_numpy = y_truth.cpu().detach().numpy()
+        y_pred_numpy = y_pred.cpu().detach().numpy()
 
         return (
-            sequences.numpy(),
-            y_truth,
-            y_pred,
-        ), (
-            roc_auc_score(y_truth, y_pred),
-            accuracy_score(y_truth, y_pred >= 0.5),
-            np.sqrt(mean_squared_error(y_truth, y_pred))
-        )
+                   sequences.cpu().numpy(),
+                   y_truth_numpy,
+                   y_pred_numpy,
+               ), (
+                   roc_auc_score(y_truth_numpy, y_pred_numpy),
+                   accuracy_score(y_truth_numpy, y_pred_numpy >= 0.5),
+                   np.sqrt(mean_squared_error(y_truth_numpy, y_pred_numpy))
+               )
 
     def save(self, filepath) -> ...:
         torch.save(self.dkt_model.state_dict(), filepath)

@@ -41,10 +41,12 @@ train_filename = 'train.txt'
 valid_filename = 'valid.txt'
 test_filename = 'test.txt'
 
+log = 'log'
+device = 'cpu'
+
+# hyper-parameters
+epoch = 10
 batch_size = 64
 hidden_size = 10
 num_layers = 2
-seq_len = 50
-
-log = 'log'
-device = 'cpu'
+seq_len = 100
