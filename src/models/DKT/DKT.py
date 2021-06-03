@@ -11,18 +11,19 @@ from sklearn.metrics import roc_auc_score, accuracy_score, mean_squared_error
 
 
 class Net(nn.Module):
-    def __init__(self, num_questions, d_qa_vec, hidden_size, num_layers):
+    def __init__(self, num_questions, d_qa_vec, hidden_size, num_layers, device):
         super(Net, self).__init__()
         self.qa_emb = nn.Embedding(num_questions * 2, d_qa_vec)
         self.hidden_dim = hidden_size
         self.layer_dim = num_layers
         self.rnn = nn.LSTM(d_qa_vec, hidden_size, num_layers, batch_first=True)
         self.fc = nn.Linear(self.hidden_dim, num_questions)
+        self.device = device
 
     def forward(self, x) -> torch.Tensor:
         h0 = (
-            torch.zeros(self.layer_dim, x.size(0), self.hidden_dim),
-            torch.zeros(self.layer_dim, x.size(0), self.hidden_dim)
+            torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(self.device),
+            torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(self.device),
         )
         out, _ = self.rnn(self.qa_emb(x), h0)
         res = torch.sigmoid(self.fc(out))
@@ -46,13 +47,13 @@ class DKT:
     def __init__(self, num_questions, d_qa_vec, hidden_size, num_layers, device) -> ...:
         super(DKT, self).__init__()
         self.num_questions = num_questions
-        self.dkt_model = Net(num_questions, d_qa_vec, hidden_size, num_layers).to(device)
+        self.dkt_model = Net(num_questions, d_qa_vec, hidden_size, num_layers, device).to(device)
         self.device = device
 
     def train(self, train_data, test_data=None, *, epoch: int, lr=0.002, train_log_file='', test_log_file=''):
         loss_function = nn.BCEWithLogitsLoss()
         optimizer = torch.optim.Adam(self.dkt_model.parameters(), lr)
-        sequences = np.array([], int)
+        sequences = torch.tensor([]).to(self.device)
 
         # prepare logging file
         if train_log_file:
@@ -67,13 +68,13 @@ class DKT:
             for batch in tqdm.tqdm(train_data, "Epoch %s" % e):
                 integrated_pred = self.dkt_model(batch)
                 batch_size = batch.shape[0]
-                loss = torch.Tensor([0.0])
+                loss = torch.Tensor([0.0]).to(self.device)
                 for student in range(batch_size):
                     truth, pred, sequence = process_raw_pred(batch[student], integrated_pred[student],
                                                              self.num_questions)
                     if len(pred) > 0:
                         loss += loss_function(pred, truth.float())
-                        sequences = np.concatenate((sequences, sequence))
+                        sequences = torch.cat((sequences, sequence.float()))
                 # back propagation
                 optimizer.zero_grad()
                 loss.backward()
@@ -92,13 +93,13 @@ class DKT:
                     with open(test_log_file, 'a') as log_tf:
                         log_tf.write('{epoch},{auc: 8.5f},{acc:3.3f}\n'.format(epoch=e, auc=auc, acc=100 * acc))
 
-        return sequences
+        return sequences.numpy()
 
     def eval(self, test_data) -> tuple:
         self.dkt_model.eval()
-        sequences = np.array([], int)
-        y_pred = torch.Tensor([])
-        y_truth = torch.Tensor([])
+        sequences = torch.tensor([]).to(self.device)
+        y_pred = torch.Tensor([]).to(self.device)
+        y_truth = torch.Tensor([]).to(self.device)
 
         for batch in tqdm.tqdm(test_data, "evaluating"):
             integrated_pred = self.dkt_model(batch)
@@ -108,15 +109,15 @@ class DKT:
 
                 y_pred = torch.cat([y_pred, pred])
                 y_truth = torch.cat([y_truth, truth])
-                sequences = np.concatenate((sequences, sequence))
+                sequences = torch.cat((sequences, sequence.float()))
 
         y_truth = y_truth.detach().numpy()
         y_pred = y_pred.detach().numpy()
 
         return (
-            sequences,
+            sequences.numpy(),
             y_truth,
-            y_pred
+            y_pred,
         ), (
             roc_auc_score(y_truth, y_pred),
             accuracy_score(y_truth, y_pred >= 0.5),
