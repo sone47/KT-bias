@@ -33,7 +33,10 @@ def process_raw_pred(question_matrix, raw_pred, num_questions: int) -> tuple:
     question_matrix = question_matrix[question_matrix > 0]
     valid_length = len(question_matrix)
     valid_questions = (question_matrix % num_questions)[1:]
-    raw_pred = raw_pred[: valid_length - 1]
+    if valid_length == 0:
+        raw_pred = raw_pred[0: 0]
+    else:
+        raw_pred = raw_pred[: valid_length - 1]
     pred = raw_pred.gather(1, valid_questions.view(-1, 1)).flatten()
     truth = (question_matrix // num_questions)[1: valid_length]
     return truth, pred, valid_questions
