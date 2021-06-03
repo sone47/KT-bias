@@ -43,10 +43,11 @@ def process_raw_pred(question_matrix, raw_pred, num_questions: int) -> tuple:
 
 
 class DKT:
-    def __init__(self, num_questions, d_qa_vec, hidden_size, num_layers) -> ...:
+    def __init__(self, num_questions, d_qa_vec, hidden_size, num_layers, device) -> ...:
         super(DKT, self).__init__()
         self.num_questions = num_questions
-        self.dkt_model = Net(num_questions, d_qa_vec, hidden_size, num_layers)
+        self.dkt_model = Net(num_questions, d_qa_vec, hidden_size, num_layers).to(device)
+        self.device = device
 
     def train(self, train_data, test_data=None, *, epoch: int, lr=0.002, train_log_file='', test_log_file=''):
         loss_function = nn.BCEWithLogitsLoss()
@@ -93,7 +94,7 @@ class DKT:
 
         return sequences
 
-    def eval(self, test_data) -> tuple[tuple[np.array, np.array, np.array], tuple[float, float, float]]:
+    def eval(self, test_data) -> tuple:
         self.dkt_model.eval()
         sequences = np.array([], int)
         y_pred = torch.Tensor([])

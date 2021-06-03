@@ -39,7 +39,7 @@ def draw_scatter_figure(x, y, x_label='', y_label='', title='', save_path='', fi
     plt.ylabel(y_label)
     plt.scatter(x, y)
     plt.grid()
-    if save_path is not '':
+    if save_path != '':
         plt.savefig(fname=save_path)
     plt.show()
 

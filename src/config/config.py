@@ -47,3 +47,4 @@ num_layers = 2
 seq_len = 50
 
 log = 'log'
+device = 'cpu'

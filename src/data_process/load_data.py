@@ -35,10 +35,11 @@ class DataReader:
 
 
 class DKTDataset(Dataset):
-    def __init__(self, qa_sequences, seq_len, num_questions):
+    def __init__(self, qa_sequences, seq_len, num_questions, device):
         self.qa_sequences = qa_sequences
         self.seq_len = seq_len
         self.num_questions = num_questions
+        self.device = device
 
     def __len__(self):
         # number of sequences
@@ -46,22 +47,25 @@ class DKTDataset(Dataset):
 
     def __getitem__(self, index):
         qa = self.qa_sequences[index]
-        return torch.tensor(qa.tolist())
+        return torch.tensor(qa).to(self.device)
 
 
-def __get_data_loader(data_path, seq_len, batch_size, num_questions, shuffle=False):
+def __get_data_loader(data_path, seq_len, batch_size, num_questions, device, shuffle=False):
     handle = DataReader(data_path, seq_len, num_questions)
     qa_data = handle.get_data()
-    dataset = DKTDataset(qa_data, seq_len, num_questions)
+    dataset = DKTDataset(qa_data, seq_len, num_questions, device)
     data_loader = data.DataLoader(dataset, batch_size, shuffle)
     return data_loader
 
 
-def get_data_loader(train_data_path, valid_data_path, test_data_path, seq_len, batch_size, num_questions):
+def get_data_loader(train_data_path, valid_data_path, test_data_path, seq_len, batch_size, num_questions, device):
     print('loading train data:')
-    train_data_loader = __get_data_loader(train_data_path, seq_len, batch_size, num_questions, True)
+    train_data_loader = __get_data_loader(train_data_path, seq_len, batch_size, num_questions,
+                                          shuffle=True,device=device)
     print('loading valid data:')
-    valid_data_loader = __get_data_loader(valid_data_path, seq_len, batch_size, num_questions, False)
+    valid_data_loader = __get_data_loader(valid_data_path, seq_len, batch_size, num_questions,
+                                          shuffle=False, device=device)
     print('loading test data:')
-    test_data_loader = __get_data_loader(test_data_path, seq_len, batch_size, num_questions, False)
+    test_data_loader = __get_data_loader(test_data_path, seq_len, batch_size, num_questions,
+                                         shuffle=False, device=device)
     return train_data_loader, valid_data_loader, test_data_loader
