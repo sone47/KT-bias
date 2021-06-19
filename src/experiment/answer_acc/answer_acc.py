@@ -43,10 +43,10 @@ def test(model_save_path, test_data):
 
 
 def stat_corr(test_sequences, y_truth, y_pred):
-    train_data_path = path.join(conf.data_dir, conf.dataset_dirname[dataset], conf.train_filename)
+    data_path = path.join(conf.data_dir, conf.dataset_dirname[dataset], conf.test_filename)
     # post-process
     question_perf = get_questions_perf(test_sequences, y_truth, y_pred, NUM_QUESTIONS)
-    answer_acc = stat_answer_acc(train_data_path)
+    answer_acc = stat_answer_acc(data_path)
 
     union_keys = question_perf.keys() | answer_acc.keys()
 
@@ -69,11 +69,17 @@ def stat_corr(test_sequences, y_truth, y_pred):
 
 
 if __name__ == '__main__':
-    train_loader, valid_loader, test_loader = prepare_data(conf.data_dir, conf.dataset_dirname[dataset],
-                                                           conf.train_filename, conf.valid_filename, conf.test_filename,
-                                                           device, NUM_QUESTIONS, SEQ_LEN, BATCH_SIZE)
-    train(model_path, train_loader, valid_loader,
-          epoch=conf.epoch, train_log_file=log_train_file, test_log_file=log_valid_file)
+    if path.exists(model_path):
+        train_loader, valid_loader, test_loader = prepare_data(conf.data_dir, conf.dataset_dirname[dataset],
+                                                               '', '', conf.test_filename,
+                                                               device, NUM_QUESTIONS, SEQ_LEN, BATCH_SIZE)
+    else:
+        train_loader, valid_loader, test_loader = prepare_data(conf.data_dir, conf.dataset_dirname[dataset],
+                                                               conf.train_filename, conf.valid_filename,
+                                                               conf.test_filename,
+                                                               device, NUM_QUESTIONS, SEQ_LEN, BATCH_SIZE)
+        train(model_path, train_loader, valid_loader,
+              epoch=conf.epoch, train_log_file=log_train_file, test_log_file=log_valid_file)
     test_sequences, truth, pred = test(model_path, test_loader)
 
     corr_value = stat_corr(test_sequences, truth, pred)

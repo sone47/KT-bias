@@ -3,6 +3,7 @@
 
 import itertools
 import math
+from os import path
 
 import numpy as np
 import torch
@@ -59,13 +60,18 @@ def __get_data_loader(data_path, seq_len, batch_size, num_questions, device, shu
 
 
 def get_data_loader(train_data_path, valid_data_path, test_data_path, seq_len, batch_size, num_questions, device):
-    print('loading train data:')
-    train_data_loader = __get_data_loader(train_data_path, seq_len, batch_size, num_questions,
-                                          shuffle=True,device=device)
-    print('loading valid data:')
-    valid_data_loader = __get_data_loader(valid_data_path, seq_len, batch_size, num_questions,
-                                          shuffle=False, device=device)
-    print('loading test data:')
-    test_data_loader = __get_data_loader(test_data_path, seq_len, batch_size, num_questions,
-                                         shuffle=False, device=device)
+    train_data_loader, valid_data_loader, test_data_loader = None, None, None
+    if path.isfile(train_data_path):
+        print(train_data_path)
+        print('loading train data:')
+        train_data_loader = __get_data_loader(train_data_path, seq_len, batch_size, num_questions,
+                                              shuffle=True,device=device)
+    if path.isfile(valid_data_path):
+        print('loading valid data:')
+        valid_data_loader = __get_data_loader(valid_data_path, seq_len, batch_size, num_questions,
+                                              shuffle=False, device=device)
+    if path.isfile(test_data_path):
+        print('loading test data:')
+        test_data_loader = __get_data_loader(test_data_path, seq_len, batch_size, num_questions,
+                                             shuffle=False, device=device)
     return train_data_loader, valid_data_loader, test_data_loader

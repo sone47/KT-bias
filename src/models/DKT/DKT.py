@@ -53,7 +53,6 @@ class DKT:
     def train(self, train_data, test_data=None, epoch: int = 5, lr=0.002, train_log_file='', test_log_file=''):
         loss_function = nn.BCEWithLogitsLoss()
         optimizer = torch.optim.Adam(self.dkt_model.parameters(), lr)
-        sequences = torch.tensor([]).to(self.device)
 
         # prepare logging file
         if train_log_file:
@@ -74,7 +73,6 @@ class DKT:
                                                              self.num_questions)
                     if len(pred) > 0:
                         loss += loss_function(pred, truth.float())
-                        sequences = torch.cat((sequences, sequence.float()))
                 # back propagation
                 optimizer.zero_grad()
                 loss.backward()
@@ -92,8 +90,6 @@ class DKT:
                 if test_log_file:
                     with open(test_log_file, 'a') as log_tf:
                         log_tf.write('{epoch},{auc: 8.5f},{acc:3.3f}\n'.format(epoch=e, auc=auc, acc=100 * acc))
-
-        return sequences.cpu().numpy()
 
     def eval(self, test_data, evaluation: bool = True) -> tuple:
         if evaluation:

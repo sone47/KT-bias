@@ -1,10 +1,13 @@
 # coding: utf-8
 # 2021/5/11 @ sone
 
+from os import path
+
 import torch
 from src import DKT, get_data_loader
 from src import config as conf
 from src.experiment.utils import prepare_data, stat_question_ratio, get_questions_perf, draw_scatter_figure, corr
+from src.experiment.frequency.stat import stat_question_freq
 
 dataset = conf.dataset
 
@@ -40,39 +43,46 @@ def test(model_save_path, test_data):
     return sequences, y_truth, y_pred
 
 
-def stat_corr(train_sequences, test_sequences, y_truth, y_pred):
+def stat_corr(test_sequences, y_truth, y_pred):
+    data_path = path.join(conf.data_dir, conf.dataset_dirname[dataset], conf.test_filename)
     # post-process
     question_perf = get_questions_perf(test_sequences, y_truth, y_pred, NUM_QUESTIONS)
-    train_question_ratio = stat_question_ratio(train_sequences, NUM_QUESTIONS)
+    question_ratio = stat_question_freq(data_path)
 
-    union_keys = question_perf.keys() | train_question_ratio.keys()
+    union_keys = question_perf.keys() | question_ratio.keys()
 
     # delete invalid question: never showed when training and been predicted when testing
     for k in union_keys:
-        if train_question_ratio.get(k) is None:
+        if question_ratio.get(k) is None:
             del question_perf[k]
-        if question_perf.get(k) is None and train_question_ratio.get(k):
-            del train_question_ratio[k]
+        if question_perf.get(k) is None and question_ratio.get(k):
+            del question_ratio[k]
 
     question_perf = list(question_perf.values())
-    train_question_ratio = list(train_question_ratio.values())
+    question_ratio = list(question_ratio.values())
     draw_scatter_figure(
-        question_perf, train_question_ratio,
+        question_perf, question_ratio,
         x_label='acc', y_label='freq',
         save_path=dataset + '-scatter.png',
     )
 
-    return corr(question_perf, train_question_ratio)
+    return corr(question_perf, question_ratio)
 
 
 if __name__ == '__main__':
-    train_loader, valid_loader, test_loader = prepare_data(conf.data_dir, conf.dataset_dirname[dataset],
-                                                           conf.train_filename, conf.valid_filename, conf.test_filename,
-                                                           device, NUM_QUESTIONS, SEQ_LEN, BATCH_SIZE)
-    train_sequences = train(model_path, train_loader, valid_loader,
-                            epoch=conf.epoch, train_log_file=log_train_file, test_log_file=log_valid_file)
-    test_sequences, truth, pred = test(model_path, test_loader)
+    if path.exists(model_path):
+        train_loader, valid_loader, test_loader = prepare_data(conf.data_dir, conf.dataset_dirname[dataset],
+                                                               '', '', conf.test_filename,
+                                                               device, NUM_QUESTIONS, SEQ_LEN, BATCH_SIZE)
+    else:
+        train_loader, valid_loader, test_loader = prepare_data(conf.data_dir, conf.dataset_dirname[dataset],
+                                                               conf.train_filename, conf.valid_filename,
+                                                               conf.test_filename,
+                                                               device, NUM_QUESTIONS, SEQ_LEN, BATCH_SIZE)
+        train(model_path, train_loader, valid_loader,
+              epoch=conf.epoch, train_log_file=log_train_file, test_log_file=log_valid_file)
 
-    corr_value = stat_corr(train_sequences, test_sequences, truth, pred)
+    test_sequences, truth, pred = test(model_path, test_loader)
+    corr_value = stat_corr(test_sequences, truth, pred)
 
     print("The coefficient of correlation of frequency and accuracy is %.6f." % corr_value)
