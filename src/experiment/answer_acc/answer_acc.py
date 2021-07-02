@@ -16,7 +16,7 @@ HIDDEN_SIZE = conf.hidden_size
 NUM_LAYERS = conf.num_layers
 SEQ_LEN = conf.seq_len
 device = torch.device(conf.device)
-model_path = "dkt.params"
+model_path = 'dkt-' + dataset + '.params'
 
 # get trained model
 dkt = DKT(NUM_QUESTIONS, NUM_QUESTIONS // 10, HIDDEN_SIZE, NUM_LAYERS, device=device)

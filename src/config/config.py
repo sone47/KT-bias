@@ -27,9 +27,9 @@ dataset_order_field = {
 }
 
 num_questions = {
-    'assist2009': 124,
-    'assist2012': 266,
-    'assist2015': 0
+    'assist2009': 123,
+    'assist2012': 265,
+    'assist2015': 0, # placeholder
 }
 
 # data directory

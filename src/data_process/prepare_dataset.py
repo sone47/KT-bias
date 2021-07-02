@@ -21,13 +21,12 @@ if not os.path.exists(dataset_path):
 data = pd.read_csv(
     dataset_path,
     usecols=[order_field, 'user_id', 'sequence_id', 'skill_id', 'correct']
-)
+).dropna(axis=0, subset=['skill_id'])
 data['correct'] = data['correct'].astype('int')
 
-nun_question = len(data.skill_id.unique())
-print("number of skills: %d" % nun_question)
-
-data.skill_id = data.skill_id.fillna(nun_question)
+# count the number of question
+num_question = len(data.skill_id.unique())
+print("number of skills: %d" % num_question)
 
 # convert skill id to consecutive integers id
 raw_question = data.skill_id.unique().tolist()

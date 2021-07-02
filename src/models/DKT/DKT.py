@@ -13,7 +13,7 @@ from sklearn.metrics import roc_auc_score, accuracy_score, mean_squared_error
 class Net(nn.Module):
     def __init__(self, num_questions, d_qa_vec, hidden_size, num_layers, device):
         super(Net, self).__init__()
-        self.qa_emb = nn.Embedding(num_questions * 2, d_qa_vec)
+        self.qa_emb = nn.Embedding(num_questions * 2 + 1, d_qa_vec)
         self.hidden_dim = hidden_size
         self.layer_dim = num_layers
         self.rnn = nn.LSTM(d_qa_vec, hidden_size, num_layers, batch_first=True)
