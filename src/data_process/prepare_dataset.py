@@ -31,7 +31,7 @@ print("number of skills: %d" % num_question)
 # convert skill id to consecutive integers id
 raw_question = data.skill_id.unique().tolist()
 
-question2id = {q: i for i, q in enumerate(raw_question)}
+question2id = {q: i + 1 for i, q in enumerate(raw_question)}
 data['skill_id'] = data['skill_id'].map(question2id)
 
 

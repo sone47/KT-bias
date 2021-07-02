@@ -31,7 +31,7 @@ class Net(nn.Module):
 
 
 def process_raw_pred(question_matrix, raw_pred, num_questions: int) -> tuple:
-    question_matrix = question_matrix[question_matrix > 0]
+    question_matrix = question_matrix[question_matrix > 0] - 1
     valid_length = len(question_matrix)
     valid_questions = (question_matrix % num_questions)[1:]
     if valid_length == 0:
