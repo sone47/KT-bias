@@ -59,11 +59,9 @@ def corr(x, y) -> float:
 
 
 class Experiment:
-    def __init__(self, num_question, hidden_size, num_layer, seq_len, batch_size, device, dataset, data_dir, dataset_dirname,
+    def __init__(self, model_class, num_question, hidden_size, num_layer, seq_len, batch_size, device, dataset, data_dir, dataset_dirname,
                  model_save_path='.'):
-        from src import DKT
-
-        self.model = DKT(num_question, num_question // 10, hidden_size, num_layer, device=device)
+        self.model = model_class(num_question, num_question // 10, hidden_size, num_layer, device=device)
         self.model_save_path = model_save_path
         self.num_question = num_question
         self.dataset_name = dataset

@@ -2,6 +2,7 @@
 # 2021/6/18 @ sone
 
 import torch
+from src import DKT
 from src import config as conf
 from src.experiment.utils import Experiment
 from src.experiment.answer_acc.stat import stat_answer_acc
@@ -20,7 +21,7 @@ model_path = 'dkt-' + dataset + '.params'
 log_train_file = conf.log + '-train.log'
 log_valid_file = conf.log + '-valid.log'
 
-exp = Experiment(NUM_QUESTIONS, HIDDEN_SIZE, NUM_LAYERS, SEQ_LEN, BATCH_SIZE, device,
+exp = Experiment(DKT, NUM_QUESTIONS, HIDDEN_SIZE, NUM_LAYERS, SEQ_LEN, BATCH_SIZE, device,
                  conf.dataset, conf.data_dir, conf.dataset_dirname[dataset], model_path)
 exp.run(conf.epoch, log_train_file, log_valid_file, stat_answer_acc, 'answer_accuracy',
         conf.train_filename, conf.valid_filename, conf.test_filename)
