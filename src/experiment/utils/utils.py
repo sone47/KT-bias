@@ -132,7 +132,7 @@ class Experiment:
         return corr_value, bias
 
     def run(self, epoch, train_log_file, test_log_file, stat_func, prop_name, train_filename, valid_filename,
-            test_filename):
+            test_filename, group_ratio=0.1):
         if path.exists(self.model_save_path):
             train_loader, valid_loader, test_loader = prepare_data(self.data_dir, self.dataset_dirname,
                                                                    '', '', test_filename,
@@ -147,7 +147,7 @@ class Experiment:
                        epoch=epoch, train_log_file=train_log_file, test_log_file=test_log_file)
 
         test_sequences, truth, pred = self.test(test_loader)
-        corr_value, bias = self.calculate_data(stat_func, prop_name, test_filename, test_sequences, truth, pred)
+        corr_value, bias = self.calculate_data(stat_func, prop_name, test_filename, test_sequences, truth, pred, group_ratio)
 
         print("The coefficient of correlation of %s and prediction accuracy is %.6f." % (prop_name, corr_value))
         print("The bias value of %s and prediction accuracy is %.6f." % (prop_name, bias))
