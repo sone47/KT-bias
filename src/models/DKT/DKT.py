@@ -118,7 +118,7 @@ class DKT:
                ), (
                    roc_auc_score(y_truth_numpy, y_pred_numpy),
                    accuracy_score(y_truth_numpy, y_pred_numpy >= 0.5),
-                   np.sqrt(mean_squared_error(y_truth_numpy, y_pred_numpy))
+                   mean_squared_error(y_truth_numpy, y_pred_numpy)
                )
 
     def save(self, filepath) -> ...:
