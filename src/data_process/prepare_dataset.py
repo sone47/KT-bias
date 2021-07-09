@@ -10,7 +10,7 @@ dataset = conf.dataset
 dataset_name = conf.dataset_name[dataset]
 dataset_dir = os.path.join(conf.data_dir, conf.dataset_dirname[dataset])
 dataset_path = os.path.join(dataset_dir, conf.dataset_filename[dataset])
-order_field = conf.dataset_order_field[dataset]
+dataset_key = conf.dataset_key[dataset]
 
 # download raw dataset
 if not os.path.exists(dataset_path):
@@ -20,7 +20,7 @@ if not os.path.exists(dataset_path):
 # read dataset and select columns
 data = pd.read_csv(
     dataset_path,
-    usecols=[order_field, 'user_id', 'sequence_id', 'skill_id', 'correct']
+    usecols=[dataset_key['order'], 'user_id', 'sequence_id', 'skill_id', 'correct']
 ).dropna(axis=0, subset=['skill_id'])
 data['correct'] = data['correct'].astype('int')
 
@@ -45,11 +45,11 @@ def parse_all_seq(students):
 
 
 def parse_student_seq(student):
-    student = student.drop_duplicates(subset=order_field)
+    student = student.drop_duplicates(subset=dataset_key['order'])
     sequence_ids = student.sequence_id.unique()
     res_sequences = []
     for seq_id in sequence_ids:
-        seq = student[student.sequence_id == seq_id].sort_values(order_field)
+        seq = student[student.sequence_id == seq_id].sort_values(dataset_key['order'])
         questions = seq.skill_id.tolist()
         answers = seq.correct.tolist()
         res_sequences.append((questions, answers))

@@ -58,6 +58,24 @@ def corr(x, y) -> float:
     return np.corrcoef(x, y)[0, 1]
 
 
+def calc_groups(data, ratio):
+    l = len(data)
+    sorted_answer_acc = sorted(data.items(), key=lambda x: x[1], reverse=True)
+    return dict(sorted_answer_acc[:int(l * ratio)]), dict(sorted_answer_acc[-int(l * ratio):])
+
+
+def calc_bias(groups, metrics):
+    g1, g2 = groups
+    l1, l2 = len(g1), len(g2)
+    sum1, sum2 = 0, 0
+    for k in metrics.keys():
+        if k in g1:
+            sum1 += metrics[k]
+        elif k in g2:
+            sum2 += metrics[k]
+    return sum1 / l1 - sum2 / l2
+
+
 class Experiment:
     def __init__(self, model_class, num_question, hidden_size, num_layer, seq_len, batch_size, device, dataset, data_dir, dataset_dirname,
                  model_save_path='.'):
@@ -86,30 +104,32 @@ class Experiment:
         print("auc: %.6f, accuracy: %.6f, RMSE: %.6f" % (auc, acc, rmse))
         return sequences, y_truth, y_pred
 
-    def calculate_corr(self, stat_func, prop_name, filename, test_sequences, y_truth, y_pred):
+    def calculate_data(self, stat_func, prop_name, filename, test_sequences, y_truth, y_pred, group_ratio=0.1):
         data_path = path.join(self.data_dir, self.dataset_dirname, filename)
         # post-process
         question_perf = get_questions_perf(test_sequences, y_truth, y_pred, self.num_question)
-        related_prop = stat_func(data_path)
+        related_data = stat_func(data_path)
 
-        union_keys = question_perf.keys() | related_prop.keys()
-
+        union_keys = question_perf.keys() | related_data.keys()
         # delete invalid item
         for k in union_keys:
-            if related_prop.get(k) is None:
+            if related_data.get(k) is None:
                 del question_perf[k]
-            if question_perf.get(k) is None and related_prop.get(k):
-                del related_prop[k]
+            if question_perf.get(k) is None and related_data.get(k):
+                del related_data[k]
+
+        bias = calc_bias(calc_groups(related_data, group_ratio), question_perf)
 
         question_perf = list(question_perf.values())
-        related_prop = list(related_prop.values())
+        related_data = list(related_data.values())
         draw_scatter_figure(
-            question_perf, related_prop,
+            question_perf, related_data,
             x_label='acc', y_label=prop_name,
             save_path=self.dataset_name + '.png',
         )
+        corr_value = corr(question_perf, related_data)
 
-        return corr(question_perf, related_prop)
+        return corr_value, bias
 
     def run(self, epoch, train_log_file, test_log_file, stat_func, prop_name, train_filename, valid_filename,
             test_filename):
@@ -127,6 +147,7 @@ class Experiment:
                        epoch=epoch, train_log_file=train_log_file, test_log_file=test_log_file)
 
         test_sequences, truth, pred = self.test(test_loader)
-        corr_value = self.calculate_corr(stat_func, prop_name, test_filename, test_sequences, truth, pred)
+        corr_value, bias = self.calculate_data(stat_func, prop_name, test_filename, test_sequences, truth, pred)
 
-        print("The coefficient of correlation of %s and accuracy is %.6f." % (prop_name, corr_value))
+        print("The coefficient of correlation of %s and prediction accuracy is %.6f." % (prop_name, corr_value))
+        print("The bias value of %s and prediction accuracy is %.6f." % (prop_name, bias))

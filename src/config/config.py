@@ -20,16 +20,22 @@ dataset_filename = {
     'assist2015': '2015_100_skill_builders_main_problems.csv'
 }
 
-dataset_order_field = {
-    'assist2009': 'order_id',
-    'assist2012': 'end_time',
-    'assist2015': 'end_time'
+dataset_key = {
+    'assist2009': {
+        'order': 'order_id',
+    },
+    'assist2012': {
+        'order': 'end_time',
+    },
+    'assist2015': {
+        'order': 'end_time',
+    }
 }
 
 num_questions = {
     'assist2009': 123,
     'assist2012': 265,
-    'assist2015': 0, # placeholder
+    'assist2015': 0,  # placeholder
 }
 
 # data directory

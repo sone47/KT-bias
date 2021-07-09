@@ -35,6 +35,7 @@ def stat_answer_acc(filepath):
 if __name__ == '__main__':
     from src import config as conf
     from os import path
+
     dataset = conf.dataset
     dataset_name = conf.dataset_name[dataset]
     dataset_dir = path.join(conf.data_dir, conf.dataset_dirname[dataset])

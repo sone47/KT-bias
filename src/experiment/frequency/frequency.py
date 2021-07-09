@@ -2,7 +2,7 @@
 # 2021/5/11 @ sone
 
 import torch
-from src import DKT
+from src import DKT as Model
 from src import config as conf
 from src.experiment.utils import Experiment
 from src.experiment.frequency.stat import stat_question_freq
@@ -21,7 +21,7 @@ model_path = 'dkt-' + dataset + '.params'
 log_train_file = conf.log + '-train.log'
 log_valid_file = conf.log + '-valid.log'
 
-exp = Experiment(DKT, NUM_QUESTIONS, HIDDEN_SIZE, NUM_LAYERS, SEQ_LEN, BATCH_SIZE, device,
+exp = Experiment(Model, NUM_QUESTIONS, HIDDEN_SIZE, NUM_LAYERS, SEQ_LEN, BATCH_SIZE, device,
                  conf.dataset, conf.data_dir, conf.dataset_dirname[dataset], model_path)
 exp.run(conf.epoch, log_train_file, log_valid_file, stat_question_freq, 'question_frequency',
         conf.train_filename, conf.valid_filename, conf.test_filename)
