@@ -11,6 +11,8 @@ def __parse_tl(filepath):
             if i % 3 == 1:
                 # parse questions line
                 questions.extend(list(map(int, l.strip().split(','))))
+    for i, q in enumerate(questions):
+        questions[i] = q - 1
     return questions
 
 

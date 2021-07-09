@@ -29,7 +29,7 @@ def stat_question_ratio(question_sequences, num_questions) -> dict:
     return question_ratio
 
 
-def get_questions_perf(question_sequences, truth, pred, num_questions) -> dict:
+def calc_questions_acc(question_sequences, truth, pred, num_questions) -> dict:
     questions_perf = {}
     for i in range(num_questions):
         index = question_sequences == i
@@ -40,6 +40,15 @@ def get_questions_perf(question_sequences, truth, pred, num_questions) -> dict:
             acc = accuracy_score(t, p >= 0.5)
             questions_perf[i] = acc
     return questions_perf
+
+
+def calc_question_mse(question_sequences, truth, pred):
+    question_mse = {}
+    pass
+
+
+def calc_question_auc(question_sequence, truth, pred):
+    pass
 
 
 def draw_scatter_figure(x, y, x_label='', y_label='', title='', save_path='', fig_size=[10, 10]) -> ...:
@@ -59,7 +68,14 @@ def corr(x, y) -> float:
 
 
 def calc_groups(data, ratio):
+    """
+    split data into two group by ratio
+    :param data: data split
+    :param ratio: group size
+    :return: large group, small group
+    """
     l = len(data)
+    # sorted from large to small
     sorted_answer_acc = sorted(data.items(), key=lambda x: x[1], reverse=True)
     return dict(sorted_answer_acc[:int(l * ratio)]), dict(sorted_answer_acc[-int(l * ratio):])
 
@@ -100,17 +116,18 @@ class Experiment:
 
     def test(self, test_data):
         self.model.load(self.model_save_path)
-        (sequences, y_truth, y_pred), (auc, acc, rmse) = self.model.eval(test_data)
-        print("auc: %.6f, accuracy: %.6f, RMSE: %.6f" % (auc, acc, rmse))
+        (sequences, y_truth, y_pred), (auc, acc, mse) = self.model.eval(test_data)
+        print("auc: %.6f, accuracy: %.6f, MSE: %.6f" % (auc, acc, mse))
         return sequences, y_truth, y_pred
 
     def calculate_data(self, stat_func, prop_name, filename, test_sequences, y_truth, y_pred, group_ratio=0.1):
         data_path = path.join(self.data_dir, self.dataset_dirname, filename)
         # post-process
-        question_perf = get_questions_perf(test_sequences, y_truth, y_pred, self.num_question)
+        question_perf = calc_questions_acc(test_sequences, y_truth, y_pred, self.num_question)
         related_data = stat_func(data_path)
 
         union_keys = question_perf.keys() | related_data.keys()
+        print(union_keys)
         # delete invalid item
         for k in union_keys:
             if related_data.get(k) is None:
