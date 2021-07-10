@@ -23,19 +23,22 @@ dataset_filename = {
 dataset_key = {
     'assist2009': {
         'order': 'order_id',
+        'skill_id': 'skill_id',
     },
     'assist2012': {
         'order': 'end_time',
+        'skill_id': 'skill_id',
     },
     'assist2015': {
-        'order': 'end_time',
+        'order': 'log_id',
+        'skill_id': 'sequence_id',
     }
 }
 
 num_questions = {
     'assist2009': 123,
     'assist2012': 265,
-    'assist2015': 0,  # placeholder
+    'assist2015': 100,  # placeholder
 }
 
 # data directory

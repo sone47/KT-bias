@@ -20,9 +20,14 @@ if not os.path.exists(dataset_path):
 # read dataset and select columns
 data = pd.read_csv(
     dataset_path,
-    usecols=[dataset_key['order'], 'user_id', 'sequence_id', 'skill_id', 'correct']
-).dropna(axis=0, subset=['skill_id'])
+    usecols=[dataset_key['order'], 'user_id', dataset_key['skill_id'], 'correct']
+).dropna(axis=0, subset=[dataset_key['skill_id']])
+data = data.rename(columns={
+    dataset_key['order']: 'order_id',
+    dataset_key['skill_id']: 'skill_id',
+})
 data['correct'] = data['correct'].astype('int')
+
 
 # count the number of question
 num_question = len(data.skill_id.unique())
@@ -38,22 +43,18 @@ data['skill_id'] = data['skill_id'].map(question2id)
 # parse mixture to sequences
 def parse_all_seq(students):
     all_sequences = []
-    for student_id in tqdm.tqdm(students, 'parse student sequence:'):
-        student_sequence = parse_student_seq(data[data.user_id == student_id])
-        all_sequences.extend(student_sequence)
+    for student_id in tqdm.tqdm(students, 'parse student sequence'):
+        q, a = parse_student_seq(data[data.user_id == student_id])
+        all_sequences.append((q, a))
     return all_sequences
 
 
 def parse_student_seq(student):
-    student = student.drop_duplicates(subset=dataset_key['order'])
-    sequence_ids = student.sequence_id.unique()
-    res_sequences = []
-    for seq_id in sequence_ids:
-        seq = student[student.sequence_id == seq_id].sort_values(dataset_key['order'])
-        questions = seq.skill_id.tolist()
-        answers = seq.correct.tolist()
-        res_sequences.append((questions, answers))
-    return res_sequences
+    student = student.drop_duplicates(subset='order_id')
+    seq = student.sort_values('order_id')
+    questions = seq.skill_id.tolist()
+    answers = seq.correct.tolist()
+    return questions, answers
 
 
 # [(question_sequence_0, answer_sequence_0), ..., (question_sequence_n, answer_sequence_n)]
@@ -76,7 +77,7 @@ train_sequences, valid_sequences = train_test_split(train_sequences, 0.75, False
 # convert sequences data to triple line txt data
 def sequences2tl(seqs, target_path):
     with open(target_path, 'a', encoding='utf8') as f:
-        for seq in tqdm.tqdm(seqs, 'write into file: '):
+        for seq in tqdm.tqdm(seqs, 'write into file: %s\n' % target_path):
             questions, answers = seq
             seq_len = len(questions)
             f.write(str(seq_len) + '\n')
