@@ -98,7 +98,8 @@ def calc_bias(groups, metrics):
 
 
 class Experiment:
-    def __init__(self, model_class, num_question, hidden_size, num_layer, seq_len, batch_size, device, dataset, data_dir, dataset_dirname,
+    def __init__(self, model_class, num_question, hidden_size, num_layer, seq_len, batch_size, device, dataset,
+                 data_dir, dataset_dirname,
                  model_save_path='.'):
         self.model = model_class(num_question, num_question // 10, hidden_size, num_layer, device=device)
         self.model_save_path = model_save_path
@@ -110,10 +111,10 @@ class Experiment:
         self.seq_len = seq_len
         self.batch_size = batch_size
 
-    def train(self, train_data, test_data, epoch=5, train_log_file='', test_log_file=''):
+    def train(self, train_data, test_data, epoch, lr, train_log_file='', test_log_file=''):
         sequences = self.model.train(
             train_data, test_data,
-            epoch,
+            epoch, lr=lr,
             train_log_file=train_log_file, test_log_file=test_log_file,
         )
         self.model.save(self.model_save_path)
@@ -163,7 +164,7 @@ class Experiment:
 
         return (corr_acc, corr_auc, corr_mse), (bias_acc, bias_auc, bias_mse)
 
-    def run(self, epoch, train_log_file, test_log_file, stat_func, prop_name, train_filename, valid_filename,
+    def run(self, epoch, lr, train_log_file, test_log_file, stat_func, prop_name, train_filename, valid_filename,
             test_filename, group_ratio=0.1):
         if path.exists(self.model_save_path):
             train_loader, valid_loader, test_loader = prepare_data(self.data_dir, self.dataset_dirname,
@@ -176,12 +177,14 @@ class Experiment:
                                                                    self.device, self.num_question, self.seq_len,
                                                                    self.batch_size)
             self.train(train_loader, valid_loader,
-                       epoch=epoch, train_log_file=train_log_file, test_log_file=test_log_file)
+                       epoch=epoch, lr=lr, train_log_file=train_log_file, test_log_file=test_log_file)
 
         test_sequences, truth, pred = self.test(test_loader)
-        corr_value, bias = self.calculate_data(stat_func, prop_name, test_filename, test_sequences, truth, pred, group_ratio)
+        corr_value, bias = self.calculate_data(stat_func, prop_name, test_filename, test_sequences, truth, pred,
+                                               group_ratio)
         corr_value = tuple(map(str, corr_value))
         bias = tuple(map(str, bias))
 
-        print("The coefficient of correlation(acc, auc, mse) of %s and prediction accuracy is %s." % (prop_name, corr_value))
+        print("The coefficient of correlation(acc, auc, mse) of %s and prediction accuracy is %s." % (
+            prop_name, corr_value))
         print("The bias value (acc, auc, mse) of %s and prediction accuracy is %s." % (prop_name, bias))

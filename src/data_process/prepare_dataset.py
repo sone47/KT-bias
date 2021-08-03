@@ -20,11 +20,12 @@ if not os.path.exists(dataset_path):
 # read dataset and select columns
 data = pd.read_csv(
     dataset_path,
-    usecols=[dataset_key['order'], 'user_id', dataset_key['skill_id'], 'correct']
+    usecols=[dataset_key['order'], dataset_key['user_id'], dataset_key['skill_id'], 'correct']
 ).dropna(axis=0, subset=[dataset_key['skill_id']])
 data = data.rename(columns={
     dataset_key['order']: 'order_id',
     dataset_key['skill_id']: 'skill_id',
+    dataset_key['user_id']: 'user_id',
 })
 data['correct'] = data['correct'].astype('int')
 

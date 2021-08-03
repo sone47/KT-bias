@@ -23,5 +23,5 @@ log_valid_file = conf.log + '-valid.log'
 
 exp = Experiment(Model, NUM_QUESTIONS, HIDDEN_SIZE, NUM_LAYERS, SEQ_LEN, BATCH_SIZE, device,
                  conf.dataset, conf.data_dir, conf.dataset_dirname[dataset], model_path)
-exp.run(conf.epoch, log_train_file, log_valid_file, stat_question_freq, 'question_frequency',
+exp.run(conf.epoch, conf.learning_rate, log_train_file, log_valid_file, stat_question_freq, 'question_frequency',
         conf.train_filename, conf.valid_filename, conf.test_filename)
