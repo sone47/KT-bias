@@ -116,8 +116,8 @@ class Experiment:
             train_data, test_data,
             epoch, lr=lr,
             train_log_file=train_log_file, test_log_file=test_log_file,
+            save_filepath=self.model_save_path,
         )
-        self.model.save(self.model_save_path)
         return sequences
 
     def test(self, test_data):
@@ -182,9 +182,9 @@ class Experiment:
         test_sequences, truth, pred = self.test(test_loader)
         corr_value, bias = self.calculate_data(stat_func, prop_name, test_filename, test_sequences, truth, pred,
                                                group_ratio)
-        corr_value = tuple(map(str, corr_value))
+        # corr_value = tuple(map(str, corr_value))
         bias = tuple(map(str, bias))
 
-        print("The coefficient of correlation(acc, auc, mse) of %s and prediction accuracy is %s." % (
-            prop_name, corr_value))
+        # print("The coefficient of correlation(acc, auc, mse) of %s and prediction accuracy is %s." % (
+        #     prop_name, corr_value))
         print("The bias value (acc, auc, mse) of %s and prediction accuracy is %s." % (prop_name, bias))

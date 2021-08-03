@@ -50,9 +50,10 @@ class DKT:
         self.dkt_model = Net(num_questions, d_qa_vec, hidden_size, num_layers, device).to(device)
         self.device = device
 
-    def train(self, train_data, test_data=None, epoch: int = 5, lr=0.002, train_log_file='', test_log_file=''):
+    def train(self, train_data, test_data=None, epoch: int = 5, lr=0.002, train_log_file='', test_log_file='', save_filepath=''):
         loss_function = nn.BCEWithLogitsLoss()
         optimizer = torch.optim.Adam(self.dkt_model.parameters(), lr)
+        best_auc = 0
 
         # prepare logging file
         if train_log_file:
@@ -86,6 +87,9 @@ class DKT:
 
             if test_data is not None:
                 _, (auc, acc, rmse) = self.eval(test_data, False)
+                if auc > best_auc:
+                    self.save(save_filepath)
+                    best_auc = auc
                 print("[Epoch %d] auc: %.6f, accuracy: %.6f, RMSE: %.6f" % (e, auc, acc, rmse))
                 if test_log_file:
                     with open(test_log_file, 'a') as log_tf:
