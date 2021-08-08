@@ -43,11 +43,12 @@ def load_dataset(dataset_path, dataset_name, dataset_key):
         new_data = pd.DataFrame()
         for s in tqdm(data.user_id.unique(), desc='loading dataset'):
             seq = pd.DataFrame(data[data.user_id == s])
-            interval_time = seq.loc[:, 'order'].diff()
-            interval_time.iloc[0] = interval_time.max()
-            interval_time = interval_time.astype('int')
-            seq['interval_time'] = interval_time
-            new_data = pd.concat([new_data, seq])
+            if len(seq) > 1:
+                interval_time = seq.loc[:, 'order'].diff()
+                interval_time.iloc[0] = interval_time.max()
+                interval_time = interval_time.astype('int')
+                seq['interval_time'] = interval_time
+                new_data = pd.concat([new_data, seq])
         return new_data
     else:
         return data
