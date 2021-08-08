@@ -28,21 +28,29 @@ dataset_key = {
         'order': 'order_id',
         'skill_id': 'skill_id',
         'user_id': 'user_id',
+        'correct': 'correct',
+        'time': 'overlap_time',
     },
     'assist2012': {
         'order': 'end_time',
         'skill_id': 'skill_id',
         'user_id': 'user_id',
+        'correct': 'correct',
     },
     'assist2015': {
         'order': 'log_id',
         'skill_id': 'sequence_id',
         'user_id': 'user_id',
+        'correct': 'correct',
     },
     'assist2017': {
         'order': 'endTime',
         'skill_id': 'skill',
         'user_id': 'studentId',
+        'correct': 'correct',
+        'time': 'timeTaken',
+        'start_time': 'startTime',
+        'end_time': 'endTime',
     },
 }
 
