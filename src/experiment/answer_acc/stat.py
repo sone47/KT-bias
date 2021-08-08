@@ -9,10 +9,10 @@ def __parse_tl(filepath):
     answers = []
     with open(filepath, 'r') as f:
         for i, l in enumerate(f.readlines()):
-            if i % 3 == 1:
+            if i % 2 == 0:
                 # parse questions line
                 questions.extend(list(map(int, l.strip().split(','))))
-            elif i % 3 == 2:
+            elif i % 2 == 1:
                 # parse answers line
                 answers.extend(list(map(int, l.strip().split(','))))
     for i, q in enumerate(questions):

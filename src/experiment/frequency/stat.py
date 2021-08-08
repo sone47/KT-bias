@@ -8,7 +8,7 @@ def __parse_tl(filepath):
     questions = []
     with open(filepath, 'r') as f:
         for i, l in enumerate(f.readlines()):
-            if i % 3 == 1:
+            if i % 2 == 0:
                 # parse questions line
                 questions.extend(list(map(int, l.strip().split(','))))
     for i, q in enumerate(questions):
