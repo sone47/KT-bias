@@ -106,16 +106,28 @@ def save_txt_file(train_data, valid_data, test_data, train_path, valid_path, tes
 
 
 def decode_keys_arg(keys_str):
-    return keys_str.split(',')
+    keys = keys_str.split(',')
+
+    if 'skill_id' in keys and keys.index('skill_id') != 0:
+        keys.remove('skill_id')
+    if 'skill_id' not in keys:
+        keys.insert(0, 'skill_id')
+
+    if 'correct' in keys and keys.index('correct') != 1:
+        keys.remove('correct')
+    if 'correct' not in keys:
+        keys.insert(1, 'correct')
+
+    return keys
 
 
 def main():
     parser = argparse.ArgumentParser(description='Script to prepare txt data')
     parser.add_argument('--dataset', type=str, default='assist2009')
-    parser.add_argument('--train_file', type=str, default='train.txt')
+    parser.add_argument('--train_file', type=str, default='train.txt', help='train data saved file name')
     parser.add_argument('--valid_file', type=str, default='valid.txt')
     parser.add_argument('--test_file', type=str, default='test.txt')
-    parser.add_argument('--keys', type=str, default='skill_id,correct')
+    parser.add_argument('--keys', type=str, default='skill_id,correct', help='keys the bias analysis requires')
     params = parser.parse_args()
 
     dataset_name, dataset_dir, dataset_path, dataset_key = prepare_dataset_conf(params.dataset)
