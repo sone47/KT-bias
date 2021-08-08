@@ -64,7 +64,7 @@ def v2id(data, key):
 # parse mixture to sequences
 def parse_all_seq(data, all_seq_id, keys):
     for k in keys:
-        if k not in data.cloumns:
+        if k not in data.columns:
             raise KeyError('Key %s is not in dataset.' % k)
 
     all_sequences = []
@@ -141,6 +141,7 @@ def main():
     v2id(dataset, 'skill_id')
 
     # [(question_sequence_0, answer_sequence_0), ..., (question_sequence_n, answer_sequence_n)]
+    print(dataset)
     sequences = parse_all_seq(dataset, dataset.user_id.unique(), keys=decode_keys_arg(params.keys))
 
     # train: valid: test = 6: 2: 2
