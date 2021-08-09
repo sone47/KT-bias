@@ -75,8 +75,8 @@ device = 'cpu'
 
 # hyper-parameters
 epoch = 10
-learning_rate = 0.05
+learning_rate = 0.025
 batch_size = 64
 hidden_size = 10
-num_layers = 3
+num_layers = 2
 seq_len = 100

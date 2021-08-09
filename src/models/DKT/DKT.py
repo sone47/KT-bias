@@ -50,7 +50,8 @@ class DKT:
         self.dkt_model = Net(num_questions, d_qa_vec, hidden_size, num_layers, device).to(device)
         self.device = device
 
-    def train(self, train_data, test_data=None, epoch: int = 5, lr=0.002, train_log_file='', test_log_file='', save_filepath=''):
+    def train(self, train_data, test_data=None, epoch: int = 5, lr=0.002, train_log_file='', test_log_file='',
+              save_filepath=''):
         loss_function = nn.BCEWithLogitsLoss()
         optimizer = torch.optim.Adam(self.dkt_model.parameters(), lr)
         best_auc = 0
@@ -65,13 +66,12 @@ class DKT:
 
         for e in range(epoch):
             losses = []
-            for batch in tqdm.tqdm(train_data, "Epoch %s" % e):
+            for batch, *_ in tqdm.tqdm(train_data, "Epoch %s" % e):
                 integrated_pred = self.dkt_model(batch)
                 batch_size = batch.shape[0]
                 loss = torch.Tensor([0.0]).to(self.device)
                 for student in range(batch_size):
-                    truth, pred, sequence = process_raw_pred(batch[student], integrated_pred[student],
-                                                             self.num_questions)
+                    truth, pred, _ = process_raw_pred(batch[student], integrated_pred[student], self.num_questions)
                     if len(pred) > 0:
                         loss += loss_function(pred, truth.float())
                 # back propagation
@@ -99,31 +99,34 @@ class DKT:
         if evaluation:
             self.dkt_model.eval()
         sequences = torch.tensor([]).to(self.device)
+        all_features = [torch.tensor([]) for _ in range(1)]
         y_pred = torch.Tensor([]).to(self.device)
         y_truth = torch.Tensor([]).to(self.device)
 
-        for batch in tqdm.tqdm(test_data, "evaluating"):
+        for batch, *features in tqdm.tqdm(test_data, "evaluating"):
             integrated_pred = self.dkt_model(batch)
             batch_size = batch.shape[0]
             for student in range(batch_size):
                 truth, pred, sequence = process_raw_pred(batch[student], integrated_pred[student], self.num_questions)
+                valid_length = len(sequence)
 
+                sequences = torch.cat((sequences, sequence.float()))
                 y_pred = torch.cat([y_pred, pred.float()])
                 y_truth = torch.cat([y_truth, truth.float()])
-                sequences = torch.cat((sequences, sequence.float()))
+                for i, feature in enumerate(features):
+                    all_features[i] = torch.cat((all_features[i], feature[student][1: valid_length + 1].float()))
 
-        y_truth_numpy = y_truth.cpu().detach().numpy()
-        y_pred_numpy = y_pred.cpu().detach().numpy()
+        sequences = sequences.cpu().numpy()
+        y_truth = y_truth.cpu().detach().numpy()
+        y_pred = y_pred.cpu().detach().numpy()
+        for i, _ in enumerate(all_features):
+            all_features[i] = all_features[i].numpy()
 
-        return (
-                   sequences.cpu().numpy(),
-                   y_truth_numpy,
-                   y_pred_numpy,
-               ), (
-                   roc_auc_score(y_truth_numpy, y_pred_numpy),
-                   accuracy_score(y_truth_numpy, y_pred_numpy >= 0.5),
-                   mean_squared_error(y_truth_numpy, y_pred_numpy)
-               )
+        auc = roc_auc_score(y_truth, y_pred)
+        accuracy = accuracy_score(y_truth, y_pred >= 0.5)
+        mse = mean_squared_error(y_truth, y_pred)
+
+        return (sequences, all_features, y_truth, y_pred), (auc, accuracy, mse)
 
     def save(self, filepath) -> ...:
         torch.save(self.dkt_model.state_dict(), filepath)

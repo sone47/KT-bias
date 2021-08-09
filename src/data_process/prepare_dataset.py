@@ -141,7 +141,6 @@ def main():
     v2id(dataset, 'skill_id')
 
     # [(question_sequence_0, answer_sequence_0), ..., (question_sequence_n, answer_sequence_n)]
-    print(dataset)
     sequences = parse_all_seq(dataset, dataset.user_id.unique(), keys=decode_keys_arg(params.keys))
 
     # train: valid: test = 6: 2: 2

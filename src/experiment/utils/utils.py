@@ -2,10 +2,10 @@
 # 2021/5/11 @ sone
 
 from os import path
+import math
 
 import numpy as np
 from sklearn.metrics import roc_auc_score, accuracy_score, mean_squared_error
-import matplotlib.pyplot as plt
 
 from src import get_data_loader
 
@@ -19,82 +19,62 @@ def prepare_data(data_dir, dataset_dirname, train_filename, valid_filename, test
                            seq_len, batch_size, num_question, device=device)
 
 
-def stat_question_ratio(question_sequences, num_questions) -> dict:
-    total_questions = len(question_sequences)
-    question_ratio = {i: 0 for i in range(num_questions)}
-    for q in question_sequences:
-        question_ratio[q] += 1
-    for i in range(num_questions):
-        question_ratio[i] /= total_questions
-    return question_ratio
-
-
-def __calc_perf(question_sequences, truth, pred, num_questions, perf_func) -> dict:
-    questions_perf = {}
-    for i in range(num_questions):
-        index = question_sequences == i
-        q = question_sequences[index]
-        t = truth[index]
-        p = pred[index]
-        if len(q) > 0:
-            try:
-                questions_perf[i] = perf_func(t, p)
-            except ValueError:
-                questions_perf[i] = 0
-    return questions_perf
-
-
-def calc_questions_acc(question_sequences, truth, pred, num_questions) -> dict:
-    return __calc_perf(question_sequences, truth, pred >= 0.5, num_questions, accuracy_score)
-
-
-def calc_question_mse(question_sequences, truth, pred, num_questions) -> dict:
-    return __calc_perf(question_sequences, truth, pred, num_questions, mean_squared_error)
-
-
-def calc_question_auc(question_sequences, truth, pred, num_questions) -> dict:
-    return __calc_perf(question_sequences, truth, pred, num_questions, roc_auc_score)
-
-
-def draw_scatter_figure(x, y, x_label='', y_label='', title='', save_path='', fig_size=[10, 10]) -> ...:
-    plt.figure(figsize=fig_size)
-    plt.title(title)
-    plt.xlabel(x_label)
-    plt.ylabel(y_label)
-    plt.scatter(x, y)
-    plt.grid()
-    if save_path != '':
-        plt.savefig(fname=save_path)
-    plt.show()
-
-
 def corr(x, y) -> float:
     return np.corrcoef(x, y)[0, 1]
 
 
-def calc_groups(data, ratio):
+def divide_groups(data, sort_func, ratio):
     """
     split data into two group by ratio
     :param data: data split
-    :param ratio: group size
-    :return: large group, small group
+    :param sort_func: sorted function
+    :param ratio: group ratio, recommend the number that could be divisible by 1
+    :return: (large group, small group)
     """
-    l = len(data)
+    span = int(len(data) * ratio)
+    n = int(1 / ratio)
     # sorted from large to small
-    sorted_answer_acc = sorted(data.items(), key=lambda x: x[1], reverse=True)
-    return dict(sorted_answer_acc[:int(l * ratio)]), dict(sorted_answer_acc[-int(l * ratio):])
+    data.sort(key=sort_func, reverse=True)
+    # divide data into n groups
+    groups = []
+    for i in range(n):
+        if i == n - 1:
+            groups.append(data[span * i:])
+        else:
+            groups.append(data[span * i: span * (i + 1)])
+    return groups
 
 
-def calc_bias(groups, metrics):
+def calculate_accuracy(truth, pred):
+    pred[pred > 0.5] = 1.0
+    pred[pred <= 0.5] = 0.0
+    return accuracy_score(truth, pred)
+
+
+def calculate_auc(truth, pred):
+    return roc_auc_score(truth, pred)
+
+
+def calculate_mse(truth, pred):
+    return mean_squared_error(truth, pred)
+
+
+def calculate_bias(groups, metrics_func):
     g1, g2 = groups
-    l1, l2 = len(g1), len(g2)
-    sum1, sum2 = 0, 0
-    for k in metrics.keys():
-        if k in g1:
-            sum1 += metrics[k]
-        elif k in g2:
-            sum2 += metrics[k]
-    return sum1 / l1 - sum2 / l2
+    t1 = np.array([item['truth'] for item in g1])
+    t2 = np.array([item['truth'] for item in g2])
+    p1 = np.array([item['pred'] for item in g1])
+    p2 = np.array([item['pred'] for item in g2])
+    return metrics_func(t1, p1) - metrics_func(t2, p2)
+
+
+def calculate_all_bias(groups):
+    # calculate bias
+    bias_accuracy = calculate_bias(groups, calculate_accuracy)
+    bias_auc = calculate_bias(groups, calculate_auc)
+    bias_mse = calculate_bias(groups, calculate_mse)
+
+    return bias_accuracy, bias_auc, bias_mse
 
 
 class Experiment:
@@ -112,60 +92,21 @@ class Experiment:
         self.batch_size = batch_size
 
     def train(self, train_data, test_data, epoch, lr, train_log_file='', test_log_file=''):
-        sequences = self.model.train(
+        self.model.train(
             train_data, test_data,
             epoch, lr=lr,
             train_log_file=train_log_file, test_log_file=test_log_file,
             save_filepath=self.model_save_path,
         )
-        return sequences
 
     def test(self, test_data):
         self.model.load(self.model_save_path)
-        (sequences, y_truth, y_pred), (auc, acc, mse) = self.model.eval(test_data)
+        data, (auc, acc, mse) = self.model.eval(test_data)
         print("auc: %.6f, accuracy: %.6f, MSE: %.6f" % (auc, acc, mse))
-        return sequences, y_truth, y_pred
+        return data
 
-    def calculate_data(self, stat_func, prop_name, filename, test_sequences, y_truth, y_pred, group_ratio=0.1):
-        data_path = path.join(self.data_dir, self.dataset_dirname, filename)
-        # post-process
-        question_acc = calc_questions_acc(test_sequences, y_truth, y_pred, self.num_question)
-        question_auc = calc_question_auc(test_sequences, y_truth, y_pred, self.num_question)
-        question_mse = calc_question_mse(test_sequences, y_truth, y_pred, self.num_question)
-        related_data = stat_func(data_path)
-
-        union_keys = question_acc.keys() | related_data.keys()
-        # delete invalid item
-        for k in union_keys:
-            if related_data.get(k) is None:
-                del question_acc[k]
-                del question_auc[k]
-                del question_mse[k]
-            if question_acc.get(k) is None and related_data.get(k):
-                del related_data[k]
-
-        groups = calc_groups(related_data, group_ratio)
-        bias_acc = calc_bias(groups, question_acc)
-        bias_auc = calc_bias(groups, question_auc)
-        bias_mse = calc_bias(groups, question_mse)
-
-        question_acc = list(question_acc.values())
-        question_auc = list(question_auc.values())
-        question_mse = list(question_mse.values())
-        related_data = list(related_data.values())
-        # draw_scatter_figure(
-        #     question_auc, related_data,
-        #     x_label='acc', y_label=prop_name,
-        #     save_path=self.dataset_name + '.png',
-        # )
-        corr_acc = corr(question_acc, related_data)
-        corr_auc = corr(question_auc, related_data)
-        corr_mse = corr(question_mse, related_data)
-
-        return (corr_acc, corr_auc, corr_mse), (bias_acc, bias_auc, bias_mse)
-
-    def run(self, epoch, lr, train_log_file, test_log_file, stat_func, prop_name, train_filename, valid_filename,
-            test_filename, group_ratio=0.1):
+    def run(self, epoch, lr, train_log_file, test_log_file, train_filename, valid_filename,
+            test_filename, output_processor):
         if path.exists(self.model_save_path):
             train_loader, valid_loader, test_loader = prepare_data(self.data_dir, self.dataset_dirname,
                                                                    '', '', test_filename,
@@ -179,12 +120,6 @@ class Experiment:
             self.train(train_loader, valid_loader,
                        epoch=epoch, lr=lr, train_log_file=train_log_file, test_log_file=test_log_file)
 
-        test_sequences, truth, pred = self.test(test_loader)
-        corr_value, bias = self.calculate_data(stat_func, prop_name, test_filename, test_sequences, truth, pred,
-                                               group_ratio)
-        # corr_value = tuple(map(str, corr_value))
-        bias = tuple(map(str, bias))
+        output = self.test(test_loader)
 
-        # print("The coefficient of correlation(acc, auc, mse) of %s and prediction accuracy is %s." % (
-        #     prop_name, corr_value))
-        print("The bias value (acc, auc, mse) of %s and prediction accuracy is %s." % (prop_name, bias))
+        output_processor(*output)
