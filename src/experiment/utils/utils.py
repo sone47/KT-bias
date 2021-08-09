@@ -19,8 +19,17 @@ def prepare_data(data_dir, dataset_dirname, train_filename, valid_filename, test
                            seq_len, batch_size, num_question, device=device)
 
 
-def corr(x, y) -> float:
-    return np.corrcoef(x, y)[0, 1]
+def calculate_all_group_performance(groups):
+    accuracy = []
+    auc = []
+    mse = []
+    for group in groups:
+        truth = np.array([item['truth'] for item in group])
+        pred = np.array([item['pred'] for item in group])
+        accuracy.append(calculate_accuracy(truth, pred))
+        auc.append(calculate_auc(truth, pred))
+        mse.append(calculate_mse(truth, pred))
+    return accuracy, auc, mse
 
 
 def divide_groups(data, sort_func, ratio):

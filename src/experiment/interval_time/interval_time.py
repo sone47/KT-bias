@@ -5,7 +5,7 @@ import torch
 import numpy as np
 from src import DKT
 from src import config as conf
-from src.experiment.utils import Experiment, divide_groups, calculate_all_bias, calculate_accuracy, calculate_auc, calculate_mse
+from src.experiment.utils import Experiment, divide_groups, calculate_all_bias, calculate_all_group_performance
 
 dataset = conf.dataset
 
@@ -22,22 +22,8 @@ train_log_file = conf.log + '-train.log'
 valid_log_file = conf.log + '-valid.log'
 
 
-def calculate_all_group_performance(groups):
-    accuracy = []
-    auc = []
-    mse = []
-    for group in groups:
-        truth = np.array([item['truth'] for item in group])
-        pred = np.array([item['pred'] for item in group])
-        accuracy.append(calculate_accuracy(truth, pred))
-        auc.append(calculate_auc(truth, pred))
-        mse.append(calculate_mse(truth, pred))
-    return accuracy, auc, mse
-
-
 def output_processor(sequence, features, truth, pred):
     result_data = [{
-        'skill_id': q,
         'interval': features[0][i],
         'truth': truth[i],
         'pred': pred[i],
