@@ -63,12 +63,6 @@ num_questions = {
 
 # data directory
 data_dir = os.path.join('/my project location.../KT-bias', 'data')
-# dataset = 'assist2012'
-dataset = 'assist2009'
-
-train_filename = 'train.txt'
-valid_filename = 'valid.txt'
-test_filename = 'test.txt'
 
 log = 'log'
 device = 'cpu'
