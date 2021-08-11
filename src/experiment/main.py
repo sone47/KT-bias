@@ -6,10 +6,6 @@ from src import DKT
 from src import config as conf
 from src.experiment.utils import Experiment
 
-# prepare log file
-train_log_file = conf.log + '-train.log'
-valid_log_file = conf.log + '-valid.log'
-
 if __name__ == '__main__':
     # parse argument from terminal
     import argparse
@@ -31,8 +27,12 @@ if __name__ == '__main__':
     device = torch.device(conf.device)
     model_path = 'dkt-' + dataset + '.params'
 
+    # prepare log file
+    train_log_file = conf.log + '-train-' + dataset + '.log'
+    valid_log_file = conf.log + '-valid-' + dataset + '.log'
+
     exp = Experiment(DKT, NUM_QUESTIONS, HIDDEN_SIZE, NUM_LAYERS, SEQ_LEN, BATCH_SIZE, device,
-                     conf.dataset, conf.data_dir, conf.dataset_dirname[dataset], model_path)
+                     dataset, conf.data_dir, conf.dataset_dirname[dataset], model_path)
 
     if params.exp_property == 'interval_time':
         from interval_time import output_processor
