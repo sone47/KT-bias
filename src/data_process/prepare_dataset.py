@@ -3,6 +3,7 @@ import argparse
 import sys
 
 import random
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -25,20 +26,20 @@ def load_dataset(dataset_path, dataset_name, dataset_key):
         get_data(dataset_name, conf.data_dir)
 
     # read dataset and select columns
-    cols = ['order', 'skill_id', 'user_id', 'time', 'correct']
+    cols = ['order', 'skill_id', 'user_id', 'correct']
     for i, c in enumerate(cols):
         if c not in dataset_key or not dataset_key[c]:
             print('Key \'%s\' is not exist in dataset %s. It will be removed.' % (c, dataset_name))
             cols.pop(i)
     use_cols = [dataset_key[c] for c in cols]
     data = pd.read_csv(dataset_path, usecols=use_cols) \
-        .dropna(axis=0, subset=[dataset_key['skill_id']]) \
-        .sort_values(dataset_key['order'], ascending=True)
+        .dropna(axis=0, subset=[dataset_key['skill_id']])
 
     data = data.rename(columns={dataset_key[c]: c for c in cols})
     data['correct'] = data['correct'].astype('int')
 
     if 'order' in cols:
+        data = data.sort_values('order', ascending=True)
         # compute interval time
         new_data = pd.DataFrame()
         for s in tqdm(data.user_id.unique(), desc='loading dataset'):
@@ -57,7 +58,7 @@ def load_dataset(dataset_path, dataset_name, dataset_key):
 def v2id(data, key):
     raw_data = data[key].unique()
 
-    data2id = {q: i + 1 for i, q in enumerate(raw_data)}
+    data2id = {q: i for i, q in enumerate(raw_data)}
     data[key] = data[key].map(data2id)
 
 
@@ -75,7 +76,6 @@ def parse_all_seq(data, all_seq_id, keys):
 
 
 def parse_seq(seq, keys):
-    seq = seq.drop_duplicates(subset='order')
     data = [seq[k] for k in keys]
     return data
 
@@ -83,7 +83,7 @@ def parse_seq(seq, keys):
 # split data
 def train_test_split(all_data, train_size=.7, shuffle=True):
     if shuffle:
-        random.shuffle(all_data)
+        np.random.shuffle(all_data)
     boundary = round(len(all_data) * train_size)
     return all_data[: boundary], all_data[boundary:]
 
