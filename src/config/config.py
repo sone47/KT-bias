@@ -71,6 +71,6 @@ device = 'cpu'
 epoch = 10
 learning_rate = 0.005
 batch_size = 64
-hidden_size = 128
+hidden_size = 256
 num_layers = 1
 seq_len = 100
