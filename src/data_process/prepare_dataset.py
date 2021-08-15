@@ -40,7 +40,7 @@ def load_dataset(dataset_path, dataset_name, dataset_key):
 
     if 'order' in cols:
         data = data.sort_values('order', ascending=True)
-        data['order'] = data['order'].astype('int')
+        data['order'] = pd.to_datetime(data['order']).astype('int')
         # compute interval time
         new_data = pd.DataFrame()
         for s in tqdm(data.user_id.unique(), desc='loading dataset'):

@@ -2,9 +2,9 @@
 # 2021/5/11 @ sone
 
 from os import path
-import math
 
 import numpy as np
+from matplotlib import pyplot as plt
 from sklearn.metrics import roc_auc_score, accuracy_score, mean_squared_error
 
 from src import get_data_loader
@@ -32,18 +32,19 @@ def calculate_all_group_performance(groups):
     return accuracy, auc, mse
 
 
-def divide_groups(data, sort_func, ratio):
+def divide_groups(data, sort_func, ratio, ascending=True):
     """
-    split data into two group by ratio
+    split data into groups by ratio
     :param data: data split
     :param sort_func: sorted function
     :param ratio: group ratio, recommend the number that could be divisible by 1
+    :param ascending: if True, groups from smaller to larger
     :return: (large group, small group)
     """
     span = int(len(data) * ratio)
     n = int(1 / ratio)
     # sorted from large to small
-    data.sort(key=sort_func, reverse=True)
+    data.sort(key=sort_func, reverse=(not ascending))
     # divide data into n groups
     groups = []
     for i in range(n):
@@ -86,11 +87,21 @@ def calculate_all_bias(groups):
     return bias_accuracy, bias_auc, bias_mse
 
 
+def draw_stat_graph(x, y, graph_save_path='', title='', x_label='', y_label=''):
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.scatter(x, y)
+    if graph_save_path:
+        pass
+    plt.show()
+
+
 class Experiment:
     def __init__(self, model_class, num_question, hidden_size, num_layer, seq_len, batch_size, device, dataset,
                  data_dir, dataset_dirname,
                  model_save_path='.'):
-        self.model = model_class(num_question, num_question // 10, hidden_size, num_layer, device=device)
+        self.model = model_class(num_question, hidden_size, num_layer, device=device)
         self.model_save_path = model_save_path
         self.num_question = num_question
         self.dataset_name = dataset
