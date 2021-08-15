@@ -65,46 +65,6 @@ class DataReader:
         interval_data = interval_data.reshape([-1, self.seq_len])
         return q_data, a_data, interval_data
 
-# class DataReader:
-#     def __init__(self, seq_len, num_question, device, n_unit=2, separate_char=','):
-#         self.seq_len = seq_len
-#         self.n_question = num_question
-#         self.device = device
-#         self.n_unit = n_unit
-#         self.separate_char = separate_char
-#
-#     def get_data(self, data_path):
-#         data = np.load(data_path, allow_pickle=True)
-#         q_data = np.array([])
-#         a_data = np.array([])
-#         interval_data = np.array([])
-#         for seq in tqdm(data, desc='loading data'):
-#             question_sequence = np.array(seq[4])
-#             answer_sequence = np.array(seq[3])
-#             interval_time = np.array(seq[1])
-#             length = seq[5]
-#
-#             mod = 0 if length % self.seq_len == 0 else (self.seq_len - length % self.seq_len)
-#             if length % self.seq_len <= 5:
-#                 answer_sequence = answer_sequence[: -(length % self.seq_len)]
-#                 question_sequence = question_sequence[: -(length % self.seq_len)]
-#                 interval_time = interval_time[: -(length % self.seq_len)]
-#                 zeros = np.zeros(0)
-#             else:
-#                 zeros = np.zeros(mod)
-#             question_sequence = np.append(question_sequence, zeros + self.n_question)
-#             answer_sequence = np.append(answer_sequence, zeros)
-#             interval_time = np.append(interval_time, zeros)
-#
-#             q_data = np.append(q_data, question_sequence)
-#             a_data = np.append(a_data, answer_sequence)
-#             interval_data = np.append(interval_data, interval_time)
-#
-#         q_data = q_data.reshape([-1, self.seq_len]).astype(int)
-#         a_data = a_data.reshape([-1, self.seq_len]).astype(int)
-#         interval_data = interval_data.reshape([-1, self.seq_len])
-#         return q_data, a_data, interval_data
-
 
 class DKTDataset(Dataset):
     def __init__(self, q, a, interval):
