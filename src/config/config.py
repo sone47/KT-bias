@@ -38,7 +38,6 @@ dataset_key = {
         'correct': 'correct',
     },
     'assist2015': {
-        'order': 'log_id',
         'skill_id': 'sequence_id',
         'user_id': 'user_id',
         'correct': 'correct',
@@ -73,4 +72,4 @@ learning_rate = 0.005
 batch_size = 64
 hidden_size = 256
 num_layers = 1
-seq_len = 100
+seq_len = 200

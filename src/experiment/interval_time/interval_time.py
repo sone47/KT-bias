@@ -1,7 +1,9 @@
 # coding: utf-8
 # 2021/8/8 @ sone
 
-from src.experiment.utils import divide_groups, calculate_all_bias, calculate_all_group_performance
+import numpy as np
+from src.experiment.utils import divide_groups, calculate_all_bias, calculate_all_group_performance, draw_stat_graph, \
+    calculate_accuracy, draw_stat_graph
 
 
 def output_processor(sequence, features, truth, pred):
@@ -15,9 +17,14 @@ def output_processor(sequence, features, truth, pred):
     # calculate bias
     bias = calculate_all_bias((groups[0], groups[-1]))
     # calculate all groups performance
-    accuracy, auc, mse = calculate_all_group_performance(groups)
+    group_accuracy, group_auc, group_mse = calculate_all_group_performance(groups)
+    # calculate the correlation of interval time with prediction performance
+    values = np.array([sum([item['interval'] for item in group]) for group in groups])
+    accuracy_corr = np.corrcoef(values, np.array(group_accuracy))[0, 1]
+    auc_corr = np.corrcoef(values, np.array(group_auc))[0, 1]
+    mse_corr = np.corrcoef(values, np.array(group_mse))[0, 1]
 
-    print("The bias value (acc, auc, mse) of interval_time is %s." % str(bias))
-    print('accuracy', accuracy)
-    print('auc', auc)
-    print('mse', mse)
+    print("The bias value (acc, auc, mse) of interval time is %s." % str(bias))
+    print('accuracy correlation value: ', accuracy_corr)
+    print('auc correlation value: ', auc_corr)
+    print('mse correlation value: ', mse_corr)

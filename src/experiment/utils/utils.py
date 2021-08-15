@@ -11,12 +11,12 @@ from src import get_data_loader
 
 
 def prepare_data(data_dir, dataset_dirname, train_filename, valid_filename, test_filename, device, num_question,
-                 seq_len=50, batch_size=64):
+                 seq_len=50, batch_size=64, n_unit=2):
     train_data_path = path.join(data_dir, dataset_dirname, train_filename)
     valid_data_path = path.join(data_dir, dataset_dirname, valid_filename)
     test_data_path = path.join(data_dir, dataset_dirname, test_filename)
     return get_data_loader(train_data_path, valid_data_path, test_data_path,
-                           seq_len, batch_size, num_question, device=device)
+                           seq_len, batch_size, num_question, device=device, n_unit=n_unit)
 
 
 def calculate_all_group_performance(groups):
@@ -126,17 +126,17 @@ class Experiment:
         return data
 
     def run(self, epoch, lr, train_log_file, test_log_file, train_filename, valid_filename,
-            test_filename, output_processor):
+            test_filename, n_unit, output_processor):
         if path.exists(self.model_save_path):
             train_loader, valid_loader, test_loader = prepare_data(self.data_dir, self.dataset_dirname,
                                                                    '', '', test_filename,
                                                                    self.device, self.num_question, self.seq_len,
-                                                                   self.batch_size)
+                                                                   self.batch_size, n_unit)
         else:
             train_loader, valid_loader, test_loader = prepare_data(self.data_dir, self.dataset_dirname,
                                                                    train_filename, valid_filename, test_filename,
                                                                    self.device, self.num_question, self.seq_len,
-                                                                   self.batch_size)
+                                                                   self.batch_size, n_unit)
             self.train(train_loader, valid_loader,
                        epoch=epoch, lr=lr, train_log_file=train_log_file, test_log_file=test_log_file)
 
