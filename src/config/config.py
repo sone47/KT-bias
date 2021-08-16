@@ -63,6 +63,7 @@ num_questions = {
 n_problem = {
     'assist2009': 26688,
     'assist2012': 179999,
+    'assist2015': 0,
     'assist2017': 3162,
 }
 
@@ -72,10 +73,8 @@ data_dir = os.path.join('/my project location.../KT-bias', 'data')
 log = 'log'
 device = 'cpu'
 
-# hyper-parameters
+# common hyper-parameters
 epoch = 10
 learning_rate = 0.005
 batch_size = 64
-hidden_size = 256
-num_layers = 1
 seq_len = 200

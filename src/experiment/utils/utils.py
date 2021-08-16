@@ -7,17 +7,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.metrics import roc_auc_score, accuracy_score, mean_squared_error
 
-from src import get_data_loader
-
-
-def prepare_data(data_dir, dataset_dirname, train_filename, valid_filename, test_filename, device, num_question,
-                 seq_len=50, batch_size=64, n_unit=2):
-    train_data_path = path.join(data_dir, dataset_dirname, train_filename)
-    valid_data_path = path.join(data_dir, dataset_dirname, valid_filename)
-    test_data_path = path.join(data_dir, dataset_dirname, test_filename)
-    return get_data_loader(train_data_path, valid_data_path, test_data_path,
-                           seq_len, batch_size, num_question, device=device, n_unit=n_unit)
-
 
 def calculate_all_group_performance(groups):
     accuracy = []
@@ -98,23 +87,14 @@ def draw_stat_graph(x, y, graph_save_path='', title='', x_label='', y_label=''):
 
 
 class Experiment:
-    def __init__(self, model_class, num_question, hidden_size, num_layer, seq_len, batch_size, device, dataset,
-                 data_dir, dataset_dirname,
-                 model_save_path='.'):
-        self.model = model_class(num_question, hidden_size, num_layer, device=device)
+    def __init__(self, model, model_save_path='.'):
+        self.model = model
         self.model_save_path = model_save_path
-        self.num_question = num_question
-        self.dataset_name = dataset
-        self.data_dir = data_dir
-        self.dataset_dirname = dataset_dirname
-        self.device = device
-        self.seq_len = seq_len
-        self.batch_size = batch_size
 
-    def train(self, train_data, test_data, epoch, lr, train_log_file='', test_log_file=''):
+    def train(self, train_data, valid_data, epoch, lr, train_log_file='', test_log_file=''):
         self.model.train(
-            train_data, test_data,
-            epoch, lr=lr,
+            train_data, valid_data,
+            epoch=epoch, lr=lr,
             train_log_file=train_log_file, test_log_file=test_log_file,
             save_filepath=self.model_save_path,
         )
@@ -125,21 +105,10 @@ class Experiment:
         print("auc: %.6f, accuracy: %.6f, MSE: %.6f" % (auc, acc, mse))
         return data
 
-    def run(self, epoch, lr, train_log_file, test_log_file, train_filename, valid_filename,
-            test_filename, n_unit, output_processor):
-        if path.exists(self.model_save_path):
-            train_loader, valid_loader, test_loader = prepare_data(self.data_dir, self.dataset_dirname,
-                                                                   '', '', test_filename,
-                                                                   self.device, self.num_question, self.seq_len,
-                                                                   self.batch_size, n_unit)
-        else:
-            train_loader, valid_loader, test_loader = prepare_data(self.data_dir, self.dataset_dirname,
-                                                                   train_filename, valid_filename, test_filename,
-                                                                   self.device, self.num_question, self.seq_len,
-                                                                   self.batch_size, n_unit)
-            self.train(train_loader, valid_loader,
-                       epoch=epoch, lr=lr, train_log_file=train_log_file, test_log_file=test_log_file)
+    def run(self, train_data, valid_data, test_data, epoch, lr, train_log_file, test_log_file, output_processor):
+        if not path.exists(self.model_save_path):
+            self.train(train_data, valid_data, epoch=epoch, lr=lr, train_log_file=train_log_file, test_log_file=test_log_file)
 
-        output = self.test(test_loader)
+        output = self.test(test_data)
 
         output_processor(*output)

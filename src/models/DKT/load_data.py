@@ -98,7 +98,7 @@ def __get_data_loader(handler, data_path, batch_size, shuffle=False):
     return data_loader
 
 
-def get_data_loader(train_data_path, valid_data_path, test_data_path, seq_len, batch_size, num_questions, n_unit, device):
+def load_data(train_data_path, valid_data_path, test_data_path, seq_len, batch_size, num_questions, n_unit, device):
     handler = DataReader(seq_len, num_questions, device=device, n_unit=n_unit)
     train_data_loader, valid_data_loader, test_data_loader = None, None, None
     if path.isfile(train_data_path):
