@@ -30,12 +30,14 @@ dataset_key = {
         'user_id': 'user_id',
         'correct': 'correct',
         'time': 'overlap_time',
+        'problem_id': 'problem_id',
     },
     'assist2012': {
         'order': 'end_time',
         'skill_id': 'skill_id',
         'user_id': 'user_id',
         'correct': 'correct',
+        'problem_id': 'problem_id',
     },
     'assist2015': {
         'skill_id': 'sequence_id',
@@ -48,8 +50,7 @@ dataset_key = {
         'user_id': 'studentId',
         'correct': 'correct',
         'time': 'timeTaken',
-        'start_time': 'startTime',
-        'end_time': 'endTime',
+        'problem_id': 'problemId',
     },
 }
 
@@ -58,6 +59,11 @@ num_questions = {
     'assist2012': 265,
     'assist2015': 100,
     'assist2017': 102,
+}
+n_problem = {
+    'assist2009': 26688,
+    'assist2012': 179999,
+    'assist2017': 3162,
 }
 
 # data directory

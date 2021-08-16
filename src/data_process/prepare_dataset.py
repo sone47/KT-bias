@@ -26,17 +26,19 @@ def load_dataset(dataset_path, dataset_name, dataset_key):
         get_data(dataset_name, conf.data_dir)
 
     # read dataset and select columns
-    cols = ['order', 'skill_id', 'user_id', 'correct']
+    cols = ['order', 'skill_id', 'user_id', 'correct', 'problem_id']
     for i, c in enumerate(cols):
         if c not in dataset_key or not dataset_key[c]:
             print('Key \'%s\' is not exist in dataset %s. It will be removed.' % (c, dataset_name))
             cols.pop(i)
     use_cols = [dataset_key[c] for c in cols]
-    data = pd.read_csv(dataset_path, usecols=use_cols) \
-        .dropna(axis=0, subset=[dataset_key['skill_id']])
-
+    data = pd.read_csv(dataset_path, usecols=use_cols)
     data = data.rename(columns={dataset_key[c]: c for c in cols})
+    data = data.dropna(axis=0, subset=['skill_id'])
     data['correct'] = data['correct'].astype('int')
+
+    if 'problem_id' in cols:
+        data = data.dropna(axis=0, subset=['problem_id'])
 
     if 'order' in cols:
         data = data.sort_values('order', ascending=True)
@@ -140,6 +142,8 @@ def main():
     print("number of skills: %d" % num_question)
 
     v2id(dataset, 'skill_id')
+    if 'problem_id' in dataset:
+        v2id(dataset, 'problem_id')
 
     # [(question_sequence_0, answer_sequence_0), ..., (question_sequence_n, answer_sequence_n)]
     sequences = parse_all_seq(dataset, dataset.user_id.unique(), keys=decode_keys_arg(params.keys))
