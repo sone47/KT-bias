@@ -65,7 +65,7 @@ class DKT:
 
         for e in range(epoch):
             losses = []
-            for q_sequences, a_sequences, *features in tqdm.tqdm(train_data, "Epoch %s" % e):
+            for q_sequences, a_sequences, features in tqdm.tqdm(train_data, "Epoch %s" % e):
                 integrated_pred = self.dkt_model(q_sequences, a_sequences)
                 batch_size = q_sequences.size(0)
                 loss = torch.Tensor([0.0]).to(self.device)
@@ -102,7 +102,7 @@ class DKT:
         y_pred = torch.Tensor([]).to(self.device)
         y_truth = torch.Tensor([]).to(self.device)
 
-        for question_sequences, answer_sequences, *features in tqdm.tqdm(test_data, "evaluating"):
+        for question_sequences, answer_sequences, features in tqdm.tqdm(test_data, "evaluating"):
             integrated_pred = self.dkt_model(question_sequences, answer_sequences)
             batch_size = question_sequences.size(0)
             for i in range(batch_size):

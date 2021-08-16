@@ -19,9 +19,11 @@ class DataReader:
         self.separate_char = separate_char
 
     def get_data(self, data_path):
+        has_feature = self.n_unit > 2
         q_data = np.array([])
         a_data = np.array([])
-        interval_data = np.array([])
+        features_data = np.array([])
+        features = []
         with open(data_path, 'r') as d:
             for lineId, line in tqdm(enumerate(d), desc='loading data'):
                 line = line.strip()
@@ -34,43 +36,51 @@ class DataReader:
                     if len(A[len(A) - 1]) == 0:
                         A = A[:-1]
                 else:
-                    interval_time = line.split(self.separate_char)
-                    if len(interval_time[len(interval_time) - 1]) == 0:
-                        interval_time = interval_time[:-1]
+                    feature = line.split(self.separate_char)
+                    if len(feature[len(feature) - 1]) == 0:
+                        feature = feature[:-1]
+                    features.append(feature)
 
                 if lineId % self.n_unit == self.n_unit - 1:
                     length = len(Q)
                     question_sequence = np.array(Q, 'int')
                     answer_sequence = np.array(A, 'int')
-                    interval_time = np.array(interval_time, 'int')
+                    if has_feature:
+                        features = np.array(features, 'int')
 
                     mod = 0 if length % self.seq_len == 0 else (self.seq_len - length % self.seq_len)
                     if length % self.seq_len <= 5:
                         answer_sequence = answer_sequence[: -(length % self.seq_len)]
                         question_sequence = question_sequence[: -(length % self.seq_len)]
-                        interval_time = interval_time[: -(length % self.seq_len)]
-                        zeros = np.zeros(0)
-                    else:
-                        zeros = np.zeros(mod)
+                        if has_feature:
+                            features = features[:, : -(length % self.seq_len)]
+                        mod = 0
+
+                    zeros = np.zeros(mod)
+
                     question_sequence = np.append(question_sequence, zeros + self.n_question)
                     answer_sequence = np.append(answer_sequence, zeros)
-                    interval_time = np.append(interval_time, zeros)
+                    if has_feature:
+                        features = np.concatenate((features, np.zeros((len(features), mod))), axis=1)
 
                     q_data = np.append(q_data, question_sequence)
                     a_data = np.append(a_data, answer_sequence)
-                    interval_data = np.append(interval_data, interval_time)
+                    features_data = np.append(features_data, features)
+
+                    features = []
 
         q_data = q_data.reshape([-1, self.seq_len]).astype(int)
         a_data = a_data.reshape([-1, self.seq_len]).astype(int)
-        interval_data = interval_data.reshape([-1, self.seq_len])
-        return q_data, a_data, interval_data
+        if has_feature:
+            features_data = features_data.reshape([self.n_unit - 2, -1, self.seq_len])
+        return q_data, a_data, features_data
 
 
 class DKTDataset(Dataset):
-    def __init__(self, q, a, interval):
+    def __init__(self, q, a, features):
         self.q = q
         self.a = a
-        self.interval = interval
+        self.features = features
 
     def __len__(self):
         return len(self.q)
@@ -78,8 +88,7 @@ class DKTDataset(Dataset):
     def __getitem__(self, index):
         q = self.q[index]
         a = self.a[index]
-        interval = self.interval[index]
-        return torch.tensor(q), torch.tensor(a), interval
+        return torch.tensor(q), torch.tensor(a), [feature[index] for feature in self.features]
 
 
 def __get_data_loader(handler, data_path, batch_size, shuffle=False):
@@ -89,8 +98,8 @@ def __get_data_loader(handler, data_path, batch_size, shuffle=False):
     return data_loader
 
 
-def get_data_loader(train_data_path, valid_data_path, test_data_path, seq_len, batch_size, num_questions, device):
-    handler = DataReader(seq_len, num_questions, device=device, n_unit=3)
+def get_data_loader(train_data_path, valid_data_path, test_data_path, seq_len, batch_size, num_questions, n_unit, device):
+    handler = DataReader(seq_len, num_questions, device=device, n_unit=n_unit)
     train_data_loader, valid_data_loader, test_data_loader = None, None, None
     if path.isfile(train_data_path):
         print('loading train data:')

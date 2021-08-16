@@ -54,4 +54,4 @@ if __name__ == '__main__':
         raise KeyError('Wrong argument exp_property with %s' % params.exp_property)
 
     exp.run(conf.epoch, conf.learning_rate, train_log_file, valid_log_file,
-            params.train_file, params.valid_file, params.test_file, output_processor, params.n_unit)
+            params.train_file, params.valid_file, params.test_file, params.n_unit, output_processor)
