@@ -32,8 +32,8 @@ class Net(nn.Module):
         return res
 
 
-def process_raw_pred(questions, answers, raw_pred, n_question) -> tuple:
-    questions = questions[questions < n_question]
+def process_raw_pred(questions, answers, raw_pred) -> tuple:
+    questions = questions[questions > 0]
     valid_length = len(questions)
     questions = questions[1: valid_length]
     raw_pred = raw_pred[: valid_length - 1]
@@ -70,7 +70,7 @@ class DKT:
                 batch_size = q_sequences.size(0)
                 loss = torch.Tensor([0.0]).to(self.device)
                 for i in range(batch_size):
-                    truth, pred, _ = process_raw_pred(q_sequences[i], a_sequences[i], integrated_pred[i], self.n_question)
+                    truth, pred, _ = process_raw_pred(q_sequences[i], a_sequences[i], integrated_pred[i])
                     if len(pred) > 0:
                         loss += loss_function(pred, truth.float())
                 # back propagation
@@ -106,8 +106,7 @@ class DKT:
             integrated_pred = self.dkt_model(question_sequences, answer_sequences)
             batch_size = question_sequences.size(0)
             for i in range(batch_size):
-                truth, pred, sequence = process_raw_pred(question_sequences[i], answer_sequences[i], integrated_pred[i],
-                                                         self.n_question)
+                truth, pred, sequence = process_raw_pred(question_sequences[i], answer_sequences[i], integrated_pred[i])
                 valid_length = len(sequence)
 
                 sequences = torch.cat((sequences, sequence.float()))

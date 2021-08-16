@@ -49,7 +49,7 @@ def load_dataset(dataset_path, dataset_name, dataset_key):
             seq = pd.DataFrame(data[data.user_id == s])
             if len(seq) > 1:
                 interval_time = seq.loc[:, 'order'].diff()
-                interval_time.iloc[0] = interval_time.max()
+                interval_time.iloc[0] = 0
                 interval_time = interval_time.astype('int')
                 seq['interval_time'] = interval_time
                 new_data = pd.concat([new_data, seq])
@@ -61,7 +61,7 @@ def load_dataset(dataset_path, dataset_name, dataset_key):
 def v2id(data, key):
     raw_data = data[key].unique()
 
-    data2id = {q: i for i, q in enumerate(raw_data)}
+    data2id = {q: i + 1 for i, q in enumerate(raw_data)}
     data[key] = data[key].map(data2id)
 
 

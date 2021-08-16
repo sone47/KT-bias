@@ -58,7 +58,7 @@ class DataReader:
 
                     zeros = np.zeros(mod)
 
-                    question_sequence = np.append(question_sequence, zeros + self.n_question)
+                    question_sequence = np.append(question_sequence, zeros)
                     answer_sequence = np.append(answer_sequence, zeros)
                     if has_feature:
                         features = np.concatenate((features, np.zeros((len(features), mod))), axis=1)

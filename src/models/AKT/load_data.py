@@ -138,8 +138,6 @@ class PID_DATA(object):
                     qa_data.append(answer_sequence)
                     p_data.append(problem_sequence)
 
-
-
         f_data.close()
         # data: [[],[],[],...] <-- set_max_seqlen is used
         # convert data into ndarrays for better speed during training
