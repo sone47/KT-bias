@@ -132,8 +132,6 @@ class PID_DATA(object):
                             question_sequence.append(int(Q[i]))
                             problem_sequence.append(int(P[i]))
                             answer_sequence.append(Xindex)
-                        else:
-                            print(Q[i])
                     q_data.append(question_sequence)
                     qa_data.append(answer_sequence)
                     p_data.append(problem_sequence)

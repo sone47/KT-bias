@@ -33,7 +33,7 @@ class Net(nn.Module):
 
 
 def process_raw_pred(questions, answers, raw_pred) -> tuple:
-    questions = questions[questions > 0]
+    questions = questions[questions > 0] - 1
     valid_length = len(questions)
     questions = questions[1: valid_length]
     raw_pred = raw_pred[: valid_length - 1]
@@ -67,22 +67,23 @@ class DKT:
             losses = []
             for q_sequences, a_sequences, features in tqdm.tqdm(train_data, "Epoch %s" % e):
                 integrated_pred = self.dkt_model(q_sequences, a_sequences)
-                batch_size = q_sequences.size(0)
-                loss = torch.Tensor([0.0]).to(self.device)
-                for i in range(batch_size):
-                    truth, pred, _ = process_raw_pred(q_sequences[i], a_sequences[i], integrated_pred[i])
-                    if len(pred) > 0:
-                        loss += loss_function(pred, truth.float())
+                mask = q_sequences[:, 1:] > 0
+                questions = q_sequences[:, 1:][mask] - 1
+                truth = a_sequences[:, 1:][mask]
+                pred = integrated_pred[:, :-1][mask].gather(1, questions.view(-1, 1)).flatten()
+
+                loss = loss_function(pred, truth.float())
                 # back propagation
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
 
-                losses.append(loss.mean().item() / batch_size)
-            print("[Epoch %d] LogisticLoss: %.6f" % (e, float(np.mean(losses))))
+                losses.append(loss.mean().item())
+            train_loss = float(np.mean(losses))
+            print("[Epoch %d] LogisticLoss: %.6f" % (e, train_loss))
             if train_log_file:
                 with open(train_log_file, 'a') as log_tf:
-                    log_tf.write('{epoch},{loss: 8.5f}\n'.format(epoch=e, loss=sum(losses) / len(losses)))
+                    log_tf.write('{epoch},{loss: 8.5f}\n'.format(epoch=e, loss=train_loss))
 
             if test_data is not None:
                 _, (auc, acc, mse) = self.eval(test_data, False)
